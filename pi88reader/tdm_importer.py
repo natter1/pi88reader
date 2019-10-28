@@ -97,13 +97,13 @@ class XmlTdmData: # helper class used to keep TdmData interface tidy
                         )
                     )
 
-    def get_cahannel_inc(self, group_name, channel_name, group_occurrence=0, channel_occurrence=0):
-        channel_xml = self.xml.channel(group_name, channel_name, group_occurrence, channel_occurrence)
+    def get_channel_inc(self, group_name, channel_name, group_occurrence=0, channel_occurrence=0):
+        channel_xml = self.channel(group_name, channel_name, group_occurrence, channel_occurrence)
         datatype = channel_xml.findtext('datatype').split('_')[1].lower() + '_sequence'
         local_columns_usi = XmlTdmData.get_usi_from_string(channel_xml.findtext('local_columns'))[0]
-        local_column_xml = self.xml.root.find(f".//localcolumn[@id='{local_columns_usi}']")
+        local_column_xml = self.root.find(f".//localcolumn[@id='{local_columns_usi}']")
         data_usi = XmlTdmData.get_usi_from_string(local_column_xml.findtext('values'))[0]
-        return self.xml.root.find(f".//{datatype}[@id='{data_usi}']/values").get('external')
+        return self.root.find(f".//{datatype}[@id='{data_usi}']/values").get('external')
 
 class TdmData:
     """Class for importing data from National Instruments TDM/TDX files."""
@@ -147,13 +147,12 @@ class TdmData:
             Gives the nth occurrence of the channel_name name. By default the first occurrence is returned.
         :return: numpy data
         """
-        inc = self.xml.get_cahannel_inc(group_name, channel_name, group_occurrence, channel_occurrence)
+        inc = self.xml.get_channel_inc(group_name, channel_name, group_occurrence, channel_occurrence)
 
         if inc is None:
             raise ValueError(f"No binary data inc found for groupname: {group_name}; channel_name: {channel_name}")
 
         ext_attribs = self.xml.root.find(f".//file/block[@id='{inc}']").attrib
-        print(ext_attribs)
         return np.memmap(self._tdx_path,
                          offset=int(ext_attribs['byteOffset']),
                          shape=(int(ext_attribs['length']),),

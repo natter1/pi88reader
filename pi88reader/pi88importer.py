@@ -26,6 +26,20 @@ class PI88Measurement:
         self.segments = PI88Segments()
 
         self.average_dynamic_depth = None
+        self.average_dynamic_load = None
+        self.average_dynamic_time = None
+
+        self.average_dynamic_freq = None
+        self.average_dynamic_disp_amp = None
+        self.average_dynamic_phase_shift = None
+        self.average_dynamic_load_amp = None
+        self.average_dynamic_dyn_comp = None
+
+        self.average_dynamic_storage_mod = None
+        self.average_dynamic_loss_mod = None
+        self.average_dynamic_tan_delta = None
+        self.average_dynamic_complex_mod = None
+        self.average_dynamic_hardness = None
 
         # todo: how to make it work with 'with' statement
         data = tdm.TdmData(filename)
@@ -57,9 +71,26 @@ class PI88Measurement:
 
     def _read_average_dynamic(self, data):
         group_name = "Indentation Averaged Values"
-        if group_name not in data.get_channel_group_names():
-            return
-        self.average_dynamic_depth = data.get_channel_data(group_name, "Indent Disp.")
+        if group_name in data.get_channel_group_names():
+            self.average_dynamic_depth = data.get_channel_data(group_name, "Indent Disp.")
+            self.average_dynamic_load = data.get_channel_data(group_name, "Indent Load")
+            self.average_dynamic_time = data.get_channel_data(group_name, "Test Time")
+
+        group_name = "Basic Dynamic Averaged Values 1"
+        if group_name in data.get_channel_group_names():
+            self.average_dynamic_freq = data.get_channel_data(group_name, "Dynamic Freq.")
+            self.average_dynamic_disp_amp = data.get_channel_data(group_name, "Disp. Amp.")
+            self.average_dynamic_phase_shift = data.get_channel_data(group_name, "Phase Shift")
+            self.average_dynamic_load_amp = data.get_channel_data(group_name, "Load Amp.")
+            self.average_dynamic_phase_shift = data.get_channel_data(group_name, "Dynamic Comp.")
+
+        group_name = "Visco-Elastic: Indentation Averaged Values 1"
+        if group_name in data.get_channel_group_names():
+            self.average_dynamic_storage_mod = data.get_channel_data(group_name, "Storage Mod.")
+            self.average_dynamic_loss_mod = data.get_channel_data(group_name, "Loss Mod.")
+            self.average_dynamic_tan_delta = data.get_channel_data(group_name, "Tan-Delta")
+            self.average_dynamic_complex_mod = data.get_channel_data(group_name, "Complex Mod.")
+            self.average_dynamic_hardness = data.get_channel_data(group_name, "Hardness")
 
 
 measurement = PI88Measurement('D:\\py_projects\\pi88reader\\resources\\12000uN 01 LC.tdm')
@@ -75,56 +106,31 @@ measurement = PI88Measurement('D:\\py_projects\\pi88reader\\resources\\12000uN 0
 # print("time:", measurement.segments.time)
 # print("begin demand:", measurement.segments.begin_demand)
 # print("end demand:", measurement.segments.end_demand)
-# print("average dynamic depth:", measurement.average_dynamic_depth)
-
+print("average dynamic depth:", measurement.average_dynamic_depth)
+print("average dynamic load:", measurement.average_dynamic_load)
+print("average dynamic time:", measurement.average_dynamic_time)
 # // -------------------
 # // av
 # dyn
 # data
 # // -------------------
-# if (data.channelGroupName == "Indentation Averaged Values"){
-# if (data.name == "Indent Disp."){
-# measurement.avDyn_Depth = data.data;
+#
+# removeNAN();
+# for (tdx_eInt32Usi_data & data : tdx_eInt32Usi_datas){
+# if (data.channelGroupName == "Segments"){
+# if (data.name == "Segment FB Mode"){
+# measurement.segments.FBMode = data.data;
 # }
-# if (data.name == "Indent Load"){
-# measurement.avDyn_Load = data.data;
+# if (data.name == "Segment Points"){
+# measurement.segments.points = data.data;
+# measurement.segments.points_compressed = data.data; // values will be overwritten, if compressing data
 # }
-# if (data.name == "Test Time"){
-# measurement.avDyn_Time = data.data;
-# }
-# }
-# if (data.channelGroupName == "Basic Dynamic Averaged Values 1"){
-# if (data.name == "Dynamic Freq."){
-# measurement.avDyn_Freq = data.data;
-# }
-# if (data.name == "Disp. Amp."){
-# measurement.avDyn_Disp_Amp = data.data;
-# }
-# if (data.name == "Phase Shift"){
-# measurement.avDyn_Phase_Shift = data.data;
-# }
-# if (data.name == "Load Amp."){
-# measurement.avDyn_Load_Amp = data.data;
-# }
-# if (data.name == "Dynamic Comp."){
-# measurement.avDyn_dyn_Comp = data.data;
+# if (data.name == "Segment LIA Status"){
+# measurement.segments.LIAStatus = data.data;
 # }
 # }
-# if (data.channelGroupName == "Visco-Elastic: Indentation Averaged Values 1"){
-# if (data.name == "Storage Mod."){
-# measurement.avDyn_Storage_Mod = data.data;
 # }
-# if (data.name == "Loss Mod."){
-# measurement.avDyn_Loss_Mod = data.data;
-# }
-# if (data.name == "Tan-Delta"){
-# measurement.avDyn_Tan_Delta = data.data;
-# }
-# if (data.name == "Complex Mod."){
-# measurement.avDyn_Complex_Mod = data.data;
-# }
-# if (data.name == "Hardness"){
-# measurement.avDyn_Hardness = data.data;
-# }
-# }
+#
+# if (measurement.depth.size() > maxDataSize){
+# maxDataSize = measurement.depth.size();
 # }

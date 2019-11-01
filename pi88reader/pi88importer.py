@@ -131,8 +131,10 @@ class PI88Measurement:
 
 
 # measurement = PI88Measurement('D:\\py_projects\\pi88reader\\resources\\10000uN 06.tdm')
-measurement = PI88Measurement('D:\\py_projects\\pi88reader\\resources\\12000uN 01 LC.tdm')
+# measurement = PI88Measurement('D:\\py_projects\\pi88reader\\resources\\12000uN 01 LC.tdm')
 
+
+measurement = PI88Measurement('D:\\myAnsys\\pi88reader\\resources\\12000uN 01 LC.tdm')
 # print("time:", measurement.time)
 # print("depth:", measurement.depth)
 # print("load:", measurement.load)

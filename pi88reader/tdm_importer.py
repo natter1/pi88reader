@@ -206,3 +206,25 @@ class TdmData:
         """
         channel_xml = self.xml.channel(channel_group_name, channel_name, occurrence, ch_occurrence)
         return channel_xml.findtext('description')
+
+    def get_instance_attributes_dict(self):
+        """
+        Function specific for PI88 measurement files
+        :return: dict
+        """
+        result = {}
+        element = self.xml.tdm_root.find("instance_attributes")
+        for child in element:
+            # print(child)
+            if child.tag == 'string_attribute':
+                result[child.get("name")] = child.find("s").text
+                #result.append({child.get("name"), child.find("s").text})
+                # print(child.get("name"), child.find("s").text)
+            elif child.tag == 'double_attribute':
+                result[child.get("name")] = float(child.text)
+            elif child.tag == 'long_attribute':
+                result[child.get("name")] = int(child.text)
+            # todo: 'time_attribute'
+            else:
+                result[child.get("name")] = child.text
+        return result

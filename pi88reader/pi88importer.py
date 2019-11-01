@@ -1,6 +1,22 @@
 import pi88reader.tdm_importer as tdm
 import numpy as np
 
+class PI88AreaFunction:
+    data_names = [
+        ("filename", "Acquisition_Area_Function_Name"),
+        ("b", "Current_Area_Function_B"),
+        ("c0", "Current_Area_Function_C0"),
+        ("c1", "Current_Area_Function_C1"),
+        ("c2", "Current_Area_Function_C2"),
+        ("c3", "Current_Area_Function_C3"),
+        ("c4", "Current_Area_Function_C4"),
+        ("c5", "Current_Area_Function_C5")
+    ]
+
+    def __init__(self):
+        for name_tuple in PI88AreaFunction.data_names:
+            setattr(self, name_tuple[0], None)
+
 
 class PI88Segments:
     # (attribute_name, TDM-channelname)
@@ -54,6 +70,7 @@ class PI88Measurement:
         ("average_dynamic_disp_amp_v", "Disp. Amp. Volt."),
         ("average_dynamic_load_amp_v", "Load Amp. Volt."),
 
+        # channel groupname: "Visco-Elastic: Indentation Averaged Values 1"
         ("average_dynamic_storage_mod", "Storage Mod."),
         ("average_dynamic_loss_mod", "Loss Mod."),
         ("average_dynamic_tan_delta", "Tan-Delta"),
@@ -61,6 +78,17 @@ class PI88Measurement:
         ("average_dynamic_hardness", "Hardness"),
         ("average_dynamic_contact_area", "Contact Area"),
         ("average_dynamic_contact_depth", "Contact Depth")
+    ]
+    # self.settings dictonary names for important settings
+    important_settings_names = [
+        "Current_Machine_Compliance__nm___mN__",
+        "Current_Tip_Modulus__MPa__",
+        "Current_Tip_Poissons_Ratio",
+        "Acquisition_Tare",
+        "Acquisition_Transducer_Type",
+        "Acquisition_Test_Aborted",
+        "Current_Drift_Correction",
+        "Current_Drift_Rate__nm___s__"
     ]
 
     def __init__(self, filename):
@@ -71,6 +99,7 @@ class PI88Measurement:
             setattr(self, name_tuple[0], None)
 
         self.segments = PI88Segments()
+        self.settings = {}
 
         # todo: how to make it work with 'with' statement
         data = tdm.TdmData(filename)
@@ -78,6 +107,7 @@ class PI88Measurement:
         self._read_quasi_static(data)
         self._read_segemnts(data)
         self._read_average_dynamic(data)
+        self._read_settings(data)
 
         for name_tuple in PI88Measurement.dynamic_array_names:
             self.remove_nans(name_tuple[0])
@@ -114,6 +144,66 @@ class PI88Measurement:
         self._read_data(data, group_name, PI88Measurement.dynamic_array_names[14:], self)
         # print(data.channel_dict(group_name))
 
+    def _read_settings(self, data):
+        self.settings = data.get_instance_attributes_dict()
+
+
+#     void
+#     pi88TDMToExcel::getImportantMeasurementSettings()
+#     {
+#         measurement.areaFunction.filename = getMeasurementSettingsValueByName("Acquisition_Area_Function_Name");
+#     measurement.areaFunction.b = getMeasurementSettingsValueByName("Current_Area_Function_B").toDouble();
+#     measurement.areaFunction.c0 = getMeasurementSettingsValueByName("Current_Area_Function_C0").toDouble();
+#     measurement.areaFunction.c1 = getMeasurementSettingsValueByName("Current_Area_Function_C1").toDouble();
+#     measurement.areaFunction.c2 = getMeasurementSettingsValueByName("Current_Area_Function_C2").toDouble();
+#     measurement.areaFunction.c3 = getMeasurementSettingsValueByName("Current_Area_Function_C3").toDouble();
+#     measurement.areaFunction.c4 = getMeasurementSettingsValueByName("Current_Area_Function_C4").toDouble();
+#     measurement.areaFunction.c5 = getMeasurementSettingsValueByName("Current_Area_Function_C5").toDouble();
+#
+#     measurement.settings.currentMachineCompliance = getMeasurementSettingsValueByName(
+#         "Current_Machine_Compliance__nm___mN__").toDouble();
+#     measurement.settings.currentTipModulus = getMeasurementSettingsValueByName("Current_Tip_Modulus__MPa__").toDouble();
+#     measurement.settings.currentTipPoissonRatio = getMeasurementSettingsValueByName(
+#         "Current_Tip_Poissons_Ratio").toDouble();
+#     measurement.settings.acquisitionTare = getMeasurementSettingsValueByName("Acquisition_Tare").toDouble();
+#     switch(getMeasurementSettingsValueByName("Acquisition_Transducer_Type").toInt())
+#     {
+#         case
+#     1:
+#     measurement.settings.transducer = Transducer::trLowLoad;
+#     break;
+#     case
+#     2:
+#     measurement.settings.transducer = Transducer::trHighLoad;
+#     break;
+#
+#
+# default:
+# measurement.settings.transducer = Transducer::trUnknown;
+# }
+# switch(getMeasurementSettingsValueByName("Acquisition_Test_Aborted").toInt())
+# {
+# case
+# 1:
+# measurement.settings.testAborted = true;
+# break;
+# default:
+# measurement.settings.testAborted = false;
+# }
+# switch(getMeasurementSettingsValueByName("Current_Drift_Correction").toInt())
+# {
+# case
+# 1:
+# measurement.settings.driftCorrection = true;
+# break;
+# default:
+# measurement.settings.driftCorrection = false;
+# }
+# measurement.settings.driftRate = getMeasurementSettingsValueByName("Current_Drift_Rate__nm___s__").toDouble();
+# }
+
+
+
     def remove_nans(self, attribute_name):
         """
         Sometimes it happens in dynamic mode, that measurement values are invalid (-> nan).
@@ -135,6 +225,7 @@ class PI88Measurement:
 
 
 measurement = PI88Measurement('D:\\myAnsys\\pi88reader\\resources\\12000uN 01 LC.tdm')
+print(measurement.settings)
 # print("time:", measurement.time)
 # print("depth:", measurement.depth)
 # print("load:", measurement.load)

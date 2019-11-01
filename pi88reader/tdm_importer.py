@@ -27,10 +27,11 @@ DTYPE_CONVERTERS = {'eInt8Usi': 'i1',
                     'eStringUsi': 'U'}
 
 
-class XmlTdmData: # helper class used to keep TdmData interface tidy
+class XmlTdmData:  # helper class used to keep TdmData interface tidy
     """
     Helper class for TdmData containing xml-related data-handling.
     """
+
     def __init__(self, element_tree):
         self.tree = element_tree
         self.root = element_tree.getroot()
@@ -105,8 +106,10 @@ class XmlTdmData: # helper class used to keep TdmData interface tidy
         data_usi = XmlTdmData.get_usi_from_string(local_column_xml.findtext('values'))[0]
         return self.root.find(f".//{datatype}[@id='{data_usi}']/values").get('external')
 
+
 class TdmData:
     """Class for importing data from National Instruments TDM/TDX files."""
+
     def __init__(self, tdm_file):
         """
         :param tdm_file: str
@@ -147,10 +150,10 @@ class TdmData:
             Gives the nth occurrence of the channel_name name. By default the first occurrence is returned.
         :return: numpy data
         """
-        inc = self.xml.get_channel_inc(group_name, channel_name, group_occurrence, channel_occurrence)
-
-        if inc is None:
-            raise ValueError(f"No binary data inc found for groupname: {group_name}; channel_name: {channel_name}")
+        try:
+            inc = self.xml.get_channel_inc(group_name, channel_name, group_occurrence, channel_occurrence)
+        except Exception as inst:
+            raise ValueError(f"{inst}\nNo binary data inc found for groupname: {group_name}; channel_name: {channel_name}")
 
         ext_attribs = self.xml.root.find(f".//file/block[@id='{inc}']").attrib
         return np.memmap(self._tdx_path,

@@ -1,5 +1,27 @@
+"""
+@author: Nathanael Jöhrmann
+"""
 import pi88reader.tdm_importer as tdm
 import numpy as np
+
+
+def main():
+    """
+    Called at end of file, if __name__ == "__main__"
+    """
+    measurement = PI88Measurement('D:\\py_projects\\pi88reader\\resources\\10000uN 06.tdm')
+    # measurement = PI88Measurement('D:\\py_projects\\pi88reader\\resources\\12000uN 01 LC.tdm')
+    # measurement = PI88Measurement('D:\\myAnsys\\pi88reader\\resources\\12000uN 01 LC.tdm')
+
+    print(measurement.settings.dict)
+    print(measurement.area_function.b)
+    # for name_tuple in PI88Measurement.static_name_tuples:
+    #     print(name_tuple[0], getattr(measurement, name_tuple[0]))
+    # for name_tuple in PI88Segments.name_tuples:
+    #     print(name_tuple[0], getattr(measurement.segments, name_tuple[0]))
+    # for name_tuple in PI88Measurement.dynamic_name_tuples:
+    #     print(name_tuple[0], getattr(measurement, name_tuple[0]))
+
 
 class PI88AreaFunction:
     data_names = [
@@ -13,14 +35,29 @@ class PI88AreaFunction:
         ("c5", "Current_Area_Function_C5")
     ]
 
-    def __init__(self):
-        for name_tuple in PI88AreaFunction.data_names:
-            setattr(self, name_tuple[0], None)
+    def __init__(self, settings_dict={}):
+        # only needed, to make pycharm code completion work:
+        self.b = None
+        self.c0 = None
+        # ...
+        self.read(settings_dict)
+
+    def read(self, settings):
+        """
+        Read area function parameters from a dictionary (settings).
+        :param settings: dict
+        :return: None
+        """
+        for data_name in PI88AreaFunction.data_names:
+            if data_name[1] in settings:
+                setattr(self, data_name[0], settings[data_name[1]])
+            else:
+                setattr(self, data_name[0], None)
 
 
 class PI88Segments:
     # (attribute_name, TDM-channelname)
-    array_names = [
+    name_tuples = [
         ("timestamp_begin", "Segment Begin Time"),
         ("timestamp_end", "Segment End Time"),
         ("time", "Segment Time"),
@@ -32,16 +69,40 @@ class PI88Segments:
         ("lia_status", "Segment LIA Status")
     ]
 
-    def __init__(self):
-        for name_tuple in PI88Segments.array_names:
-            setattr(self, name_tuple[0], None)
-
+    def __init__(self, data):
         self.points_compressed = None
+        self._read(data)
+
+    def _read(self, data):
+        group_name = "Segments"
+        data.read_from_channel_group(group_name, PI88Segments.name_tuples, self)
+        # print(data.channel_dict(group_name))
+
+
+class PI88Settings:
+    # self.settings dictonary names for important settings
+    important_settings_names = [
+        "Current_Machine_Compliance__nm___mN__",
+        "Current_Tip_Modulus__MPa__",
+        "Current_Tip_Poissons_Ratio",
+        "Acquisition_Tare",
+        "Acquisition_Transducer_Type",
+        "Acquisition_Test_Aborted",
+        "Current_Drift_Correction",
+        "Current_Drift_Rate__nm___s__"
+    ]
+
+    def __init__(self, data):
+        self.dict = {}
+        self._read(data)
+
+    def _read(self, data):
+        self.dict = data.get_instance_attributes_dict()
 
 
 class PI88Measurement:
     # (attribute_name, TDM-channelname)
-    static_array_names = [
+    static_name_tuples = [
         ("time", "Test Time"),
         ("depth", "Indent Disp."),
         ("load", "Indent Load"),
@@ -51,7 +112,7 @@ class PI88Measurement:
         ("output_v", "Indent Act. Output Volt.")
     ]
     # (attribute_name, TDM-channelname)
-    dynamic_array_names = [
+    dynamic_name_tuples = [
         # channel groupname: Indentation Averaged Values
         ("average_dynamic_time", "Test Time"),
         ("average_dynamic_depth", "Indent Disp."),
@@ -79,130 +140,38 @@ class PI88Measurement:
         ("average_dynamic_contact_area", "Contact Area"),
         ("average_dynamic_contact_depth", "Contact Depth")
     ]
-    # self.settings dictonary names for important settings
-    important_settings_names = [
-        "Current_Machine_Compliance__nm___mN__",
-        "Current_Tip_Modulus__MPa__",
-        "Current_Tip_Poissons_Ratio",
-        "Acquisition_Tare",
-        "Acquisition_Transducer_Type",
-        "Acquisition_Test_Aborted",
-        "Current_Drift_Correction",
-        "Current_Drift_Rate__nm___s__"
-    ]
 
     def __init__(self, filename):
-        for name_tuple in PI88Measurement.static_array_names:
-            setattr(self, name_tuple[0], None)
-
-        for name_tuple in PI88Measurement.dynamic_array_names:
-            setattr(self, name_tuple[0], None)
-
-        self.segments = PI88Segments()
-        self.settings = {}
-
         # todo: how to make it work with 'with' statement
         data = tdm.TdmData(filename)
 
+        self.segments = PI88Segments(data)
+        self.settings = PI88Settings(data)
+        self.area_function = PI88AreaFunction(self.settings.dict)
+
         self._read_quasi_static(data)
-        self._read_segemnts(data)
         self._read_average_dynamic(data)
-        self._read_settings(data)
 
-        for name_tuple in PI88Measurement.dynamic_array_names:
+        for name_tuple in PI88Measurement.dynamic_name_tuples:
             self.remove_nans(name_tuple[0])
-
-    def _read_data(self, data, group_name, array_names, to_object):
-        if group_name not in data.get_channel_group_names():
-            return
-        for name_tuple in array_names:
-            try:
-                setattr(to_object, name_tuple[0], data.get_channel_data(group_name, name_tuple[1]))
-            except Exception as inst:
-                print(inst)
 
     def _read_quasi_static(self, data):
         group_name = "Indentation All Data Points"
-        self._read_data(data, group_name, PI88Measurement.static_array_names, self)
-        # print(data.channel_dict(group_name))
-
-    def _read_segemnts(self, data):
-        group_name = "Segments"
-        self._read_data(data, group_name, PI88Segments.array_names, self.segments)
+        data.read_from_channel_group(group_name, PI88Measurement.static_name_tuples, self)
         # print(data.channel_dict(group_name))
 
     def _read_average_dynamic(self, data):
         group_name = "Indentation Averaged Values"
-        self._read_data(data, group_name, PI88Measurement.dynamic_array_names[0:7], self)
+        data.read_from_channel_group(group_name, PI88Measurement.dynamic_name_tuples[0:7], self)
         # print(data.channel_dict(group_name))
 
         group_name = "Basic Dynamic Averaged Values 1"
-        self._read_data(data, group_name, PI88Measurement.dynamic_array_names[7:14], self)
+        data.read_from_channel_group(group_name, PI88Measurement.dynamic_name_tuples[7:14], self)
         # print(data.channel_dict(group_name))
 
         group_name = "Visco-Elastic: Indentation Averaged Values 1"
-        self._read_data(data, group_name, PI88Measurement.dynamic_array_names[14:], self)
+        data.read_from_channel_group(group_name, PI88Measurement.dynamic_name_tuples[14:], self)
         # print(data.channel_dict(group_name))
-
-    def _read_settings(self, data):
-        self.settings = data.get_instance_attributes_dict()
-
-
-#     void
-#     pi88TDMToExcel::getImportantMeasurementSettings()
-#     {
-#         measurement.areaFunction.filename = getMeasurementSettingsValueByName("Acquisition_Area_Function_Name");
-#     measurement.areaFunction.b = getMeasurementSettingsValueByName("Current_Area_Function_B").toDouble();
-#     measurement.areaFunction.c0 = getMeasurementSettingsValueByName("Current_Area_Function_C0").toDouble();
-#     measurement.areaFunction.c1 = getMeasurementSettingsValueByName("Current_Area_Function_C1").toDouble();
-#     measurement.areaFunction.c2 = getMeasurementSettingsValueByName("Current_Area_Function_C2").toDouble();
-#     measurement.areaFunction.c3 = getMeasurementSettingsValueByName("Current_Area_Function_C3").toDouble();
-#     measurement.areaFunction.c4 = getMeasurementSettingsValueByName("Current_Area_Function_C4").toDouble();
-#     measurement.areaFunction.c5 = getMeasurementSettingsValueByName("Current_Area_Function_C5").toDouble();
-#
-#     measurement.settings.currentMachineCompliance = getMeasurementSettingsValueByName(
-#         "Current_Machine_Compliance__nm___mN__").toDouble();
-#     measurement.settings.currentTipModulus = getMeasurementSettingsValueByName("Current_Tip_Modulus__MPa__").toDouble();
-#     measurement.settings.currentTipPoissonRatio = getMeasurementSettingsValueByName(
-#         "Current_Tip_Poissons_Ratio").toDouble();
-#     measurement.settings.acquisitionTare = getMeasurementSettingsValueByName("Acquisition_Tare").toDouble();
-#     switch(getMeasurementSettingsValueByName("Acquisition_Transducer_Type").toInt())
-#     {
-#         case
-#     1:
-#     measurement.settings.transducer = Transducer::trLowLoad;
-#     break;
-#     case
-#     2:
-#     measurement.settings.transducer = Transducer::trHighLoad;
-#     break;
-#
-#
-# default:
-# measurement.settings.transducer = Transducer::trUnknown;
-# }
-# switch(getMeasurementSettingsValueByName("Acquisition_Test_Aborted").toInt())
-# {
-# case
-# 1:
-# measurement.settings.testAborted = true;
-# break;
-# default:
-# measurement.settings.testAborted = false;
-# }
-# switch(getMeasurementSettingsValueByName("Current_Drift_Correction").toInt())
-# {
-# case
-# 1:
-# measurement.settings.driftCorrection = true;
-# break;
-# default:
-# measurement.settings.driftCorrection = false;
-# }
-# measurement.settings.driftRate = getMeasurementSettingsValueByName("Current_Drift_Rate__nm___s__").toDouble();
-# }
-
-
 
     def remove_nans(self, attribute_name):
         """
@@ -216,33 +185,7 @@ class PI88Measurement:
         if array is not None:
             mask = np.invert(np.isnan(array))
             setattr(self, attribute_name, array[mask])
-        else:
-            print(f"Given attribute name {attribute_name} does not exist.")
 
 
-# measurement = PI88Measurement('D:\\py_projects\\pi88reader\\resources\\10000uN 06.tdm')
-# measurement = PI88Measurement('D:\\py_projects\\pi88reader\\resources\\12000uN 01 LC.tdm')
-
-
-measurement = PI88Measurement('D:\\myAnsys\\pi88reader\\resources\\12000uN 01 LC.tdm')
-print(measurement.settings)
-# print("time:", measurement.time)
-# print("depth:", measurement.depth)
-# print("load:", measurement.load)
-# print("depth_v:", measurement.depth_v)
-# print("load_v:", measurement.load_v)
-
-# for name_tuple in PI88Measurement.static_array_names:
-#     print(name_tuple[0], getattr(measurement, name_tuple[0]))
-
-# for name_tuple in PI88Segments.array_names:
-#     print(name_tuple[0], getattr(measurement.segments, name_tuple[0]))
-
-# for name_tuple in PI88Measurement.dynamic_array_names:
-#     print(name_tuple[0], getattr(measurement, name_tuple[0]))
-
-
-# // -------------------
-# if (measurement.depth.size() > maxDataSize){
-# maxDataSize = measurement.depth.size();
-# }
+if __name__ == "__main__":
+    main()

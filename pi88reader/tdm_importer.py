@@ -99,12 +99,17 @@ class XmlTdmData:  # helper class used to keep TdmData interface tidy
                     )
 
     def get_channel_inc(self, group_name, channel_name, group_occurrence=0, channel_occurrence=0):
-        channel_xml = self.channel(group_name, channel_name, group_occurrence, channel_occurrence)
-        datatype = channel_xml.findtext('datatype').split('_')[1].lower() + '_sequence'
-        local_columns_usi = XmlTdmData.get_usi_from_string(channel_xml.findtext('local_columns'))[0]
-        local_column_xml = self.root.find(f".//localcolumn[@id='{local_columns_usi}']")
-        data_usi = XmlTdmData.get_usi_from_string(local_column_xml.findtext('values'))[0]
-        return self.root.find(f".//{datatype}[@id='{data_usi}']/values").get('external')
+        try:
+            channel_xml = self.channel(group_name, channel_name, group_occurrence, channel_occurrence)
+            datatype = channel_xml.findtext('datatype').split('_')[1].lower() + '_sequence'
+            local_columns_usi = XmlTdmData.get_usi_from_string(channel_xml.findtext('local_columns'))[0]
+            local_column_xml = self.root.find(f".//localcolumn[@id='{local_columns_usi}']")
+            data_usi = XmlTdmData.get_usi_from_string(local_column_xml.findtext('values'))[0]
+            result = self.root.find(f".//{datatype}[@id='{data_usi}']/values").get('external')
+        except Exception as inst:
+            print(f"{inst}\nNo binary data inc found for groupname: {group_name}; channel_name: {channel_name}")
+            result = None
+        return result
 
 
 class TdmData:
@@ -140,7 +145,7 @@ class TdmData:
                 if channel.findtext('name') is not None]
 
     def get_channel_data(self, group_name, channel_name, group_occurrence=0, channel_occurrence=0):
-        """Returns data of a channel_name by its channel_name group and channel_name name.
+        """Returns data of a channel_name by its channel_group_name and channel_name name.
         
         :param group_name: str
         :param channel_name: str
@@ -148,20 +153,22 @@ class TdmData:
             Gives the nth occurrence of the channel_name group name. By default the first occurrence is returned.
         :param channel_occurrence: int, optional
             Gives the nth occurrence of the channel_name name. By default the first occurrence is returned.
-        :return: numpy data
+        :return: numpy data or None
+            Returns None, if no binary data inc was found, else returns numpy data.
         """
-        try:
-            inc = self.xml.get_channel_inc(group_name, channel_name, group_occurrence, channel_occurrence)
-        except Exception as inst:
-            raise ValueError(f"{inst}\nNo binary data inc found for groupname: {group_name}; channel_name: {channel_name}")
-
-        ext_attribs = self.xml.root.find(f".//file/block[@id='{inc}']").attrib
-        return np.memmap(self._tdx_path,
-                         offset=int(ext_attribs['byteOffset']),
-                         shape=(int(ext_attribs['length']),),
-                         dtype=np.dtype(self.xml.get_endian_format() + DTYPE_CONVERTERS[ext_attribs['valueType']]),
-                         mode='r',
-                         order=self._tdx_order).view(np.recarray)
+        inc = self.xml.get_channel_inc(group_name, channel_name, group_occurrence, channel_occurrence)
+        if inc is None:
+            return None
+        else:
+            ext_attribs = self.xml.root.find(f".//file/block[@id='{inc}']").attrib
+            return np.memmap(
+                self._tdx_path,
+                offset=int(ext_attribs['byteOffset']),
+                shape=(int(ext_attribs['length']),),
+                dtype=np.dtype(self.xml.get_endian_format() + DTYPE_CONVERTERS[ext_attribs['valueType']]),
+                mode='r',
+                order=self._tdx_order).view(np.recarray
+            )
 
     def channel_dict(self, channel_group, occurrence=0):
         """Returns a dict with {channel: data} entries of a channel_group.
@@ -207,6 +214,35 @@ class TdmData:
         channel_xml = self.xml.channel(channel_group_name, channel_name, occurrence, ch_occurrence)
         return channel_xml.findtext('description')
 
+    def read_from_channel(self, group_name, name_tuple, to_object):
+        setattr(to_object, name_tuple[0], self.get_channel_data(group_name, name_tuple[1]))
+
+    def read_from_channel_group(self, group_name, name_tuples, to_object):
+        """
+        Read channels (names given in name_tuples) from group_name into
+        to_object, by setting the attribute names given via name_tuples.
+        If some data wasn't found, the attribute is set to None.
+        :param group_name: str
+        :param name_tuples: (str, str)
+            (attribute_name, channelname)
+        :param to_object: object
+        :return: None
+        """
+        for name_tuple in name_tuples:
+            self.read_from_channel(group_name, name_tuple, to_object)
+
+    @staticmethod
+    def get_name_value_pair(element):
+        if element.tag == 'string_attribute':
+            return {element.get("name"): element.find("s").text}
+        elif element.tag == 'double_attribute':
+            return {element.get("name"): float(element.text)}
+        elif element.tag == 'long_attribute':
+            return {element.get("name"): int(element.text)}
+        # todo: 'time_attribute'
+        else:
+            return {element.get("name"): element.text}
+
     def get_instance_attributes_dict(self):
         """
         Function specific for PI88 measurement files
@@ -215,16 +251,6 @@ class TdmData:
         result = {}
         element = self.xml.tdm_root.find("instance_attributes")
         for child in element:
-            # print(child)
-            if child.tag == 'string_attribute':
-                result[child.get("name")] = child.find("s").text
-                #result.append({child.get("name"), child.find("s").text})
-                # print(child.get("name"), child.find("s").text)
-            elif child.tag == 'double_attribute':
-                result[child.get("name")] = float(child.text)
-            elif child.tag == 'long_attribute':
-                result[child.get("name")] = int(child.text)
-            # todo: 'time_attribute'
-            else:
-                result[child.get("name")] = child.text
+            result.update(self.get_name_value_pair(child))
+
         return result

@@ -9,7 +9,7 @@ from Josh Ayers and Florian Dobener
 import os.path
 import re
 import warnings
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as et
 
 import numpy as np
 
@@ -27,27 +27,216 @@ DTYPE_CONVERTERS = {'eInt8Usi': 'i1',
                     'eStringUsi': 'U'}
 
 
-class XmlTdmData:  # helper class used to keep TdmData interface tidy
-    """
-    Helper class for TdmData containing xml-related data-handling.
-    """
+def get_usi_from_string(string):
+    if string is None or string.strip() == '':
+        return []
+    else:
+        return re.findall("id\(\"(.+?)\"\)", string)
 
-    def __init__(self, element_tree):
-        self.tree = element_tree
-        self.root = element_tree.getroot()
-        self.tdm_root = self.root.find('.//tdm_root')
-        ids = XmlTdmData.get_usi_from_string(self.tdm_root.findtext('channelgroups'))
-        self.channelgroups = list(map(self.get_channelgroup_by_id, ids))
 
-    @staticmethod
-    def get_usi_from_string(string):
-        if string is None or string.strip() == '':
-            return []
-        else:
-            return re.findall("id\(\"(.+?)\"\)", string)
+class TdmChannel:
+    def __init__(self, root, _id):
+        self.xml_root = root
+        self.id = _id
+        self.name = None
+        self.description = None
+        self.unit = None
+        self.inc = None
+        self.data_type = None
+        self.local_columns_usi = None
 
-    def get_channelgroup_by_id(self, id):
-        return self.root.find('.//tdm_channelgroup[@id=\'{0}\']'.format(id))
+        self.read()
+
+    def read(self):
+        element = self.xml_root.find(f'.//tdm_channel[@id=\'{self.id}\']')
+        self.name = element.find("name").text
+        self.description = element.find("description").text
+        self.unit = element.find("unit_string").text
+        self.data_type = element.find("datatype").text
+        self.local_columns_usi = get_usi_from_string(element.findtext('local_columns'))[0]
+        self.inc = self._get_inc()
+
+    def _get_data_usi(self, root):
+        local_column = root.find(
+            f".//localcolumn[@id='{self.local_columns_usi}']")
+        return get_usi_from_string(local_column.findtext('values'))[0]
+
+    def _get_inc(self):
+        data_type = self.data_type.split('_')[1].lower() + '_sequence'
+        data_usi = self._get_data_usi(self.xml_root)
+        return self.xml_root.find(
+            f".//{data_type}[@id='{data_usi}']/values").get('external')
+
+    # def get_data(self, tdx_path, tdx_order, endian_format):
+    #     ext_attribs = self.xml_root.find(f".//file/block[@id='{self.inc}']").attrib
+    #     return np.memmap(
+    #         self._tdx_path,
+    #         offset=int(ext_attribs['byteOffset']),
+    #         shape=(int(ext_attribs['length']),),
+    #         dtype=np.dtype(self.xml.get_endian_format() + DTYPE_CONVERTERS[ext_attribs['valueType']]),
+    #         mode='r',
+    #         order=self._tdx_order
+    #         ).view(np.recarray)
+
+    def __str__(self):
+        return f"TdmChannel object\n" \
+               f"\tid: {self.id}\n" \
+               f"\tName: {self.name}\n" \
+               f"\tDescription: {self.description}\n" \
+               f"\tUnit: {self.unit}\n" \
+               f"\tdata type: {self.data_type}" \
+               f"\tinc: {self.inc}"
+
+
+class TdmChannelGroup:
+    def __init__(self, root, id):
+        self.id = None
+        self.name = None
+        self.description = None
+        self.channel_ids = []
+        self.channels = []
+
+        self.read(root, id)
+        self.read_channels(root)
+
+    def read(self, root, _id):
+        element = root.find(f'.//tdm_channelgroup[@id=\'{_id}\']')
+        self.id = element.get('id')
+        self.name = element.find("name").text
+        self.description = element.find("description").text
+        self.channel_ids = get_usi_from_string(element.findtext('channels'))
+
+    def read_channels(self, root):
+        for channel_id in self.channel_ids:
+            self.channels.append(TdmChannel(root, channel_id))
+#        print(self.channels[0])
+
+    def get_channel(self, channel_name):
+        result = [x for x in self.channels if x.name == channel_name]
+        if len(result) == 0:
+            print(f"No TdmChannel named {channel_name} found in channel_group {self.name}")
+            return None
+            # raise ValueError(f"No TdmChannel named {channel_name} found in channel_group {self.name}")
+        return result[0]
+
+    # def get_channel_data(self, channel_name):
+    #     channel = self.get_channel(channel_name)
+    #     return channel.get_data()
+    #
+    # def read_from_channel(self, name_tuple, to_object):
+    #     setattr(to_object, name_tuple[0], self.get_channel_data(name_tuple[1]))
+
+    def __str__(self):
+        return f"TdmChannelGroup object\n" \
+               f"\tid: {self.id}\n" \
+               f"\tName: {self.name}\n" \
+               f"\tDescription: {self.description}\n" \
+               f"\tChannel ids: {self.channel_ids.__str__()}"
+
+# struct tdm_double_sequence{
+#     QString id;
+#     QString binaryId;
+# };
+# };
+#
+# struct tdm_localcolumn{
+#     QString id;
+#     QString sequenceID;
+#     QString channelID;
+# };
+#
+# struct tdx_eFloat64Usi_data{
+#     QString id;
+#     std::vector<double> data;
+#     QString name;
+#     QString unit;
+#     QString channelGroupName;
+#     QString channelGroupDescription;
+# };
+#
+# struct tdx_eInt32Usi_data{
+#     QString id;
+#     std::vector<int> data;
+#     QString name;
+#     QString unit;
+#     QString channelGroupName;
+#     QString channelGroupDescription;
+# };
+
+
+class TdmData:
+    """Class for importing data from National Instruments TDM/TDX files."""
+
+    def __init__(self, tdm_file):
+        """
+        :param tdm_file: str
+            The filename including full path to the .TDM xml-file.
+        """
+        self._folder, self._tdm_filename = os.path.split(tdm_file)
+        self.root = et.parse(tdm_file).getroot()
+        self._tdx_order = 'C'  # Set binary file reading to column-major style
+        self._tdx_filename = self.root.find('.//file').get('url')
+        self._tdx_path = os.path.join(self._folder, self._tdx_filename)
+
+        self.channel_groups = []
+        self.read_channel_groups()
+
+    def read_channel_groups(self):
+        ids = get_usi_from_string(self.root.findtext('.//tdm_root//channelgroups'))
+        for _id in ids:
+            self.channel_groups.append(TdmChannelGroup(self.root, _id))
+
+    def get_channel_group_names(self):
+        """
+        Returns a list with all channel_group names.
+        :return: list of str
+        """
+        return [x.name for x in self.xml.channel_groups
+                if x.name is not None]
+
+    def get_channel_names(self, channel_group_name):
+        """
+        Returns a list with all channel names in channel_group.
+        :param channel_group_name: str
+        :return: list of str
+        """
+        channels = self.get_channel_group(channel_group_name).channels
+        return [channel.name for channel in channels
+                if channel.name is not None]
+
+    def get_channel_dict(self, channel_group_name):
+        """Returns a dict with {channel: data} entries of a channel_group.
+
+        :param channel_group_name: str
+        :return: dict
+        """
+        channel_dict = {}
+        name_doublets = set()
+
+        for channel_name in self.get_channel_names(channel_group_name):
+            if channel_name in channel_dict:
+                name_doublets.add(channel_name)
+            inc = self.get_channel(channel_group_name, channel_name).inc
+            data = self._get_data(inc)
+            channel_dict[channel_name] = np.array(data)
+
+        if len(name_doublets) > 0:
+            warnings.warn(f"Duplicate channel name(s): {name_doublets}")
+        return channel_dict
+
+    def get_channel_group(self, group_name):
+        result = [x for x in self.channel_groups if x.name == group_name]
+        if len(result) == 0:
+            # print(f"No TdmChannelGroup named {group_name} found")
+            return None
+            # raise ValueError(f"No TdmChannelGroup named {group_name} found")
+        return result[0]
+
+    def get_channel(self, channel_group_name, channel_name):
+        channel_group = self.get_channel_group(channel_group_name)
+        if channel_group:
+            return channel_group.get_channel(channel_name)
+        return None
 
     def get_endian_format(self):
         """
@@ -62,195 +251,69 @@ class XmlTdmData:  # helper class used to keep TdmData interface tidy
         else:
             raise TypeError('Unknown endian format in TDM file')
 
-    def get_tdx_filename(self):
-        return self.root.find('.//file').get('url')
+    def _get_dtype_from_tdm_type(self, value_type):
+        return np.dtype(self.get_endian_format() + DTYPE_CONVERTERS[value_type])
 
-    def channel(self, group_name, channel_name, occurrence=0, ch_occurrence=0):
-        """
-        Returns a xml channel_name element with name 'channel_name' in 'group_name'.
-        :param group_name:  str
-        :param channel_name: str
-        :param occurrence: int, optional
-        :param ch_occurrence: int, optional
-        :return: xml.etree.ElementTree.Element
-        """
-        channels = self.channels(group_name, occurrence)
-        result = list(filter(lambda x: x.findtext('name') == channel_name, channels))
-        if len(result) < ch_occurrence:
-            raise IndexError(f'Channel {channel_name} (occurrence {ch_occurrence}) not found')
-        return result[ch_occurrence]
+    def _get_data(self, inc):
+        """Gets data binary tdx-file belonging to the given inc.
 
-    def channels(self, group_name, occurrence=0):
-        """
-        Returns a list of xml elements belonging to 'group_name'.
-        :param group_name: str
-        :param occurrence: int, optional
-        :return: list of xml.etree.ElementTree.Element
-        """
-        channel_groups = list(filter(lambda x: x.findtext('name') == group_name, self.channelgroups))
-        if len(channel_groups) <= occurrence:
-            raise IndexError(f'Channel group {group_name} (occurrence {occurrence}) not found')
-        group_name = channel_groups[occurrence]
-
-        return list(map(lambda usi: self.root.find(".//tdm_channel[@id='{0}']".format(usi)),
-                        XmlTdmData.get_usi_from_string(
-                            group_name.findtext('channels'.format(group_name.get('id'))))
-                        )
-                    )
-
-    def get_channel_inc(self, group_name, channel_name, group_occurrence=0, channel_occurrence=0):
-        try:
-            channel_xml = self.channel(group_name, channel_name, group_occurrence, channel_occurrence)
-            datatype = channel_xml.findtext('datatype').split('_')[1].lower() + '_sequence'
-            local_columns_usi = XmlTdmData.get_usi_from_string(channel_xml.findtext('local_columns'))[0]
-            local_column_xml = self.root.find(f".//localcolumn[@id='{local_columns_usi}']")
-            data_usi = XmlTdmData.get_usi_from_string(local_column_xml.findtext('values'))[0]
-            result = self.root.find(f".//{datatype}[@id='{data_usi}']/values").get('external')
-        except Exception as inst:
-            print(f"{inst}\nNo binary data inc found for groupname: {group_name}; channel_name: {channel_name}")
-            result = None
-        return result
-
-
-class TdmData:
-    """Class for importing data from National Instruments TDM/TDX files."""
-
-    def __init__(self, tdm_file):
-        """
-        :param tdm_file: str
-            The filename including full path to the .TDM xml-file.
-        """
-        self._folder, self._tdm_filename = os.path.split(tdm_file)
-        self.xml = XmlTdmData(ET.parse(tdm_file))
-        self._tdx_order = 'C'  # Set binary file reading to column-major style
-        self._tdx_path = os.path.join(self._folder, self.xml.get_tdx_filename())
-
-    def get_channel_group_names(self):
-        """
-        Returns a list with all channel_group names.
-        :return: list of str
-        """
-        result = [name.text for name in self.xml.root.findall(".//tdm_channelgroup/name")
-                  if name.text is not None]
-        return result
-
-    def get_channel_names(self, channel_group):
-        """
-        Returns a list with all channel names in channel_group.
-        :param channel_group: str
-        :return: list of str
-        """
-        channels = self.xml.channels(channel_group)
-        return [channel.findtext('name') for channel in channels
-                if channel.findtext('name') is not None]
-
-    def get_channel_data(self, group_name, channel_name, group_occurrence=0, channel_occurrence=0):
-        """Returns data of a channel_name by its channel_group_name and channel_name name.
-        
-        :param group_name: str
-        :param channel_name: str
-        :param group_occurrence: int, optional
-            Gives the nth occurrence of the channel_name group name. By default the first occurrence is returned.
-        :param channel_occurrence: int, optional
-            Gives the nth occurrence of the channel_name name. By default the first occurrence is returned.
+        :param inc: int
         :return: numpy data or None
-            Returns None, if no binary data inc was found, else returns numpy data.
+            Returns None, if inc is None, else returns numpy data.
         """
-        inc = self.xml.get_channel_inc(group_name, channel_name, group_occurrence, channel_occurrence)
         if inc is None:
             return None
         else:
-            ext_attribs = self.xml.root.find(f".//file/block[@id='{inc}']").attrib
+            ext_attribs = self.root.find(f".//file/block[@id='{inc}']").attrib
             return np.memmap(
                 self._tdx_path,
                 offset=int(ext_attribs['byteOffset']),
                 shape=(int(ext_attribs['length']),),
-                dtype=np.dtype(self.xml.get_endian_format() + DTYPE_CONVERTERS[ext_attribs['valueType']]),
+                dtype=self._get_dtype_from_tdm_type(ext_attribs['valueType']),
                 mode='r',
-                order=self._tdx_order).view(np.recarray
-            )
+                order=self._tdx_order
+            ).view(np.recarray)
 
-    def channel_dict(self, channel_group, occurrence=0):
-        """Returns a dict with {channel: data} entries of a channel_group.
+    def _read_data(self, channel, attribute_name, to_object):
+        if channel:
+            setattr(to_object, attribute_name, self._get_data(channel.inc))
+        else:
+            setattr(to_object, attribute_name, None)
 
-        :param channel_group: str
-        :param occurrence: int
-        :return: dict
+    def _read_from_channel_group(self, group_name, name_tuples, to_object):
         """
-        channel_dict = {}
-        name_doublets = set()
-
-        for channel_name in self.get_channel_names(channel_group):
-            if channel_name in channel_dict:
-                name_doublets.add(channel_name)
-            data = self.get_channel_data(channel_group, channel_name)
-            channel_dict[channel_name] = np.array(data)
-
-        if len(name_doublets) > 0:
-            warnings.warn(f"Duplicate channel name(s): {name_doublets}")
-        return channel_dict
-
-    def get_channel_unit(self, channel_group, channel, occurrence=0, ch_occurrence=0):
-        """Returns the unit of the channel at given channel_group.
-
-        :param channel_group: str
-        :param channel: str
-        :param occurrence: int
-        :param ch_occurrence: int
-        :return: str
-        """
-        channel_xml = self.xml.channel(channel_group, channel, occurrence, ch_occurrence)
-        return channel_xml.findtext('unit_string')
-
-    def channel_description(self, channel_group_name, channel_name, occurrence=0, ch_occurrence=0):
-        """Returns the description of the channel at given channel_group.
-
-        :param channel_group_name: str
-        :param channel_name: str
-        :param occurrence: int, optional
-        :param ch_occurrence: int, optional
-        :return: str
-        """
-        channel_xml = self.xml.channel(channel_group_name, channel_name, occurrence, ch_occurrence)
-        return channel_xml.findtext('description')
-
-    def read_from_channel(self, group_name, name_tuple, to_object):
-        setattr(to_object, name_tuple[0], self.get_channel_data(group_name, name_tuple[1]))
-
-    def read_from_channel_group(self, group_name, name_tuples, to_object):
-        """
-        Read channels (names given in name_tuples) from group_name into
+        Read channels data (names given in name_tuples) from group_name into
         to_object, by setting the attribute names given via name_tuples.
         If some data wasn't found, the attribute is set to None.
         :param group_name: str
         :param name_tuples: (str, str)
-            (attribute_name, channelname)
+            (attribute_name, channel_name)
         :param to_object: object
         :return: None
         """
         for name_tuple in name_tuples:
-            self.read_from_channel(group_name, name_tuple, to_object)
-
-    @staticmethod
-    def get_name_value_pair(element):
-        if element.tag == 'string_attribute':
-            return {element.get("name"): element.find("s").text}
-        elif element.tag == 'double_attribute':
-            return {element.get("name"): float(element.text)}
-        elif element.tag == 'long_attribute':
-            return {element.get("name"): int(element.text)}
-        # todo: 'time_attribute'
-        else:
-            return {element.get("name"): element.text}
+            channel = self.get_channel(group_name, name_tuple[1])
+            self._read_data(channel, name_tuple[0], to_object)
 
     def get_instance_attributes_dict(self):
         """
         Function specific for PI88 measurement files
         :return: dict
         """
+        def get_name_value_pair(element):
+            if element.tag == 'string_attribute':
+                return {element.get("name"): element.find("s").text}
+            elif element.tag == 'double_attribute':
+                return {element.get("name"): float(element.text)}
+            elif element.tag == 'long_attribute':
+                return {element.get("name"): int(element.text)}
+            # todo: 'time_attribute'
+            else:
+                return {element.get("name"): element.text}
+
         result = {}
-        element = self.xml.tdm_root.find("instance_attributes")
+        element = self.root.find(".//tdm_root//instance_attributes")
         for child in element:
-            result.update(self.get_name_value_pair(child))
+            result.update(get_name_value_pair(child))
 
         return result

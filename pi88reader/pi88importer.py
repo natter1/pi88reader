@@ -9,18 +9,18 @@ def main():
     """
     Called at end of file, if __name__ == "__main__"
     """
-    measurement = PI88Measurement('D:\\py_projects\\pi88reader\\resources\\10000uN 06.tdm')
-    # measurement = PI88Measurement('D:\\py_projects\\pi88reader\\resources\\12000uN 01 LC.tdm')
+    # measurement = PI88Measurement('D:\\py_projects\\pi88reader\\resources\\10000uN 06.tdm')
+    measurement = PI88Measurement('D:\\py_projects\\pi88reader\\resources\\12000uN 01 LC.tdm')
     # measurement = PI88Measurement('D:\\myAnsys\\pi88reader\\resources\\12000uN 01 LC.tdm')
 
     print(measurement.settings.dict)
     print(measurement.area_function.b)
-    # for name_tuple in PI88Measurement.static_name_tuples:
-    #     print(name_tuple[0], getattr(measurement, name_tuple[0]))
-    # for name_tuple in PI88Segments.name_tuples:
-    #     print(name_tuple[0], getattr(measurement.segments, name_tuple[0]))
-    # for name_tuple in PI88Measurement.dynamic_name_tuples:
-    #     print(name_tuple[0], getattr(measurement, name_tuple[0]))
+    for name_tuple in PI88Measurement.static_name_tuples:
+        print(name_tuple[0], getattr(measurement, name_tuple[0]))
+    for name_tuple in PI88Segments.name_tuples:
+        print(name_tuple[0], getattr(measurement.segments, name_tuple[0]))
+    for name_tuple in PI88Measurement.dynamic_name_tuples:
+        print(name_tuple[0], getattr(measurement, name_tuple[0]))
 
 
 class PI88AreaFunction:
@@ -54,6 +54,15 @@ class PI88AreaFunction:
             else:
                 setattr(self, data_name[0], None)
 
+    def get_area(self, h):
+        return (self.c0 * h**2
+                + self.c1 * h
+                + self.c2 * h**(1/2)
+                + self.c3 * h**(1/4)
+                + self.c4 * h**(1/8)
+                + self.c5 * h**(1/16)
+                )
+
 
 class PI88Segments:
     # (attribute_name, TDM-channelname)
@@ -75,8 +84,8 @@ class PI88Segments:
 
     def _read(self, data):
         group_name = "Segments"
-        data.read_from_channel_group(group_name, PI88Segments.name_tuples, self)
-        # print(data.channel_dict(group_name))
+        data._read_from_channel_group(group_name, PI88Segments.name_tuples, self)
+        print(data.get_channel_dict(group_name))
 
 
 class PI88Settings:
@@ -148,7 +157,6 @@ class PI88Measurement:
         self.segments = PI88Segments(data)
         self.settings = PI88Settings(data)
         self.area_function = PI88AreaFunction(self.settings.dict)
-
         self._read_quasi_static(data)
         self._read_average_dynamic(data)
 
@@ -157,21 +165,19 @@ class PI88Measurement:
 
     def _read_quasi_static(self, data):
         group_name = "Indentation All Data Points"
-        data.read_from_channel_group(group_name, PI88Measurement.static_name_tuples, self)
+        data._read_from_channel_group(group_name, PI88Measurement.static_name_tuples, self)
         # print(data.channel_dict(group_name))
 
     def _read_average_dynamic(self, data):
         group_name = "Indentation Averaged Values"
-        data.read_from_channel_group(group_name, PI88Measurement.dynamic_name_tuples[0:7], self)
+        data._read_from_channel_group(group_name, PI88Measurement.dynamic_name_tuples[0:7], self)
         # print(data.channel_dict(group_name))
 
         group_name = "Basic Dynamic Averaged Values 1"
-        data.read_from_channel_group(group_name, PI88Measurement.dynamic_name_tuples[7:14], self)
-        # print(data.channel_dict(group_name))
+        data._read_from_channel_group(group_name, PI88Measurement.dynamic_name_tuples[7:14], self)
 
         group_name = "Visco-Elastic: Indentation Averaged Values 1"
-        data.read_from_channel_group(group_name, PI88Measurement.dynamic_name_tuples[14:], self)
-        # print(data.channel_dict(group_name))
+        data._read_from_channel_group(group_name, PI88Measurement.dynamic_name_tuples[14:], self)
 
     def remove_nans(self, attribute_name):
         """

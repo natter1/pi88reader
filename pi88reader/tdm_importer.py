@@ -9,7 +9,7 @@ from Josh Ayers and Florian Dobener
 import os.path
 import re
 import warnings
-import xml.etree.ElementTree as et
+import xml.etree.ElementTree
 
 import numpy as np
 
@@ -67,17 +67,6 @@ class TdmChannel:
         return self.xml_root.find(
             f".//{data_type}[@id='{data_usi}']/values").get('external')
 
-    # def get_data(self, tdx_path, tdx_order, endian_format):
-    #     ext_attribs = self.xml_root.find(f".//file/block[@id='{self.inc}']").attrib
-    #     return np.memmap(
-    #         self._tdx_path,
-    #         offset=int(ext_attribs['byteOffset']),
-    #         shape=(int(ext_attribs['length']),),
-    #         dtype=np.dtype(self.xml.get_endian_format() + DTYPE_CONVERTERS[ext_attribs['valueType']]),
-    #         mode='r',
-    #         order=self._tdx_order
-    #         ).view(np.recarray)
-
     def __str__(self):
         return f"TdmChannel object\n" \
                f"\tid: {self.id}\n" \
@@ -109,22 +98,14 @@ class TdmChannelGroup:
     def read_channels(self, root):
         for channel_id in self.channel_ids:
             self.channels.append(TdmChannel(root, channel_id))
-#        print(self.channels[0])
+
+    #        print(self.channels[0])
 
     def get_channel(self, channel_name):
         result = [x for x in self.channels if x.name == channel_name]
         if len(result) == 0:
-            print(f"No TdmChannel named {channel_name} found in channel_group {self.name}")
             return None
-            # raise ValueError(f"No TdmChannel named {channel_name} found in channel_group {self.name}")
         return result[0]
-
-    # def get_channel_data(self, channel_name):
-    #     channel = self.get_channel(channel_name)
-    #     return channel.get_data()
-    #
-    # def read_from_channel(self, name_tuple, to_object):
-    #     setattr(to_object, name_tuple[0], self.get_channel_data(name_tuple[1]))
 
     def __str__(self):
         return f"TdmChannelGroup object\n" \
@@ -132,36 +113,6 @@ class TdmChannelGroup:
                f"\tName: {self.name}\n" \
                f"\tDescription: {self.description}\n" \
                f"\tChannel ids: {self.channel_ids.__str__()}"
-
-# struct tdm_double_sequence{
-#     QString id;
-#     QString binaryId;
-# };
-# };
-#
-# struct tdm_localcolumn{
-#     QString id;
-#     QString sequenceID;
-#     QString channelID;
-# };
-#
-# struct tdx_eFloat64Usi_data{
-#     QString id;
-#     std::vector<double> data;
-#     QString name;
-#     QString unit;
-#     QString channelGroupName;
-#     QString channelGroupDescription;
-# };
-#
-# struct tdx_eInt32Usi_data{
-#     QString id;
-#     std::vector<int> data;
-#     QString name;
-#     QString unit;
-#     QString channelGroupName;
-#     QString channelGroupDescription;
-# };
 
 
 class TdmData:
@@ -173,7 +124,7 @@ class TdmData:
             The filename including full path to the .TDM xml-file.
         """
         self._folder, self._tdm_filename = os.path.split(tdm_file)
-        self.root = et.parse(tdm_file).getroot()
+        self.root = xml.etree.ElementTree.parse(tdm_file).getroot()
         self._tdx_order = 'C'  # Set binary file reading to column-major style
         self._tdx_filename = self.root.find('.//file').get('url')
         self._tdx_path = os.path.join(self._folder, self._tdx_filename)
@@ -191,7 +142,7 @@ class TdmData:
         Returns a list with all channel_group names.
         :return: list of str
         """
-        return [x.name for x in self.xml.channel_groups
+        return [x.name for x in self.channel_groups
                 if x.name is not None]
 
     def get_channel_names(self, channel_group_name):
@@ -227,9 +178,7 @@ class TdmData:
     def get_channel_group(self, group_name):
         result = [x for x in self.channel_groups if x.name == group_name]
         if len(result) == 0:
-            # print(f"No TdmChannelGroup named {group_name} found")
             return None
-            # raise ValueError(f"No TdmChannelGroup named {group_name} found")
         return result[0]
 
     def get_channel(self, channel_group_name, channel_name):
@@ -300,6 +249,7 @@ class TdmData:
         Function specific for PI88 measurement files
         :return: dict
         """
+
         def get_name_value_pair(element):
             if element.tag == 'string_attribute':
                 return {element.get("name"): element.find("s").text}

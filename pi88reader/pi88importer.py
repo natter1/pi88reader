@@ -84,7 +84,7 @@ class PI88Segments:
     def _read(self, data):
         group_name = "Segments"
         data._read_from_channel_group(group_name, PI88Segments.name_tuples, self)
-        print(data.get_channel_dict(group_name))
+        # print(data.get_channel_dict(group_name))
 
 
 class PI88Settings:

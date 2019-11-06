@@ -1,8 +1,11 @@
 """
 @author: Nathanael Jöhrmann
 """
-import pi88reader.tdm_importer as tdm
+from enum import Enum
+
 import numpy as np
+
+import pi88reader.tdm_importer as tdm
 
 
 def main():
@@ -38,7 +41,7 @@ class PI88AreaFunction:
         # only needed, to make pycharm code completion work:
         self.b = None
         self.c0 = None
-        # ...
+        # --------------------------------------------------
         self.read(settings_dict)
 
     def read(self, settings):
@@ -63,6 +66,13 @@ class PI88AreaFunction:
                 )
 
 
+class SegmentType(Enum):
+    LOAD = 1
+    UNLOAD = 2
+    HOLD = 3
+    UNKNOWN = 4
+
+
 class PI88Segments:
     # (attribute_name, TDM-channelname)
     name_tuples = [
@@ -79,12 +89,62 @@ class PI88Segments:
 
     def __init__(self, data):
         self.points_compressed = None
+        self.segment_type = []
+        # only to make code completition in pycharm work:
+        self.timestamp_begin = None
+        self.timestamp_end = None
+        self.time = None
+        self.begin_demand = None
+        self.end_demand = None
+
+        self.fb_mode = None
+        self.points = None
+        self.lia_status = None
+        # -------------------------------------------------
+
         self._read(data)
+        self.calc_segment_types()
 
     def _read(self, data):
         group_name = "Segments"
         data._read_from_channel_group(group_name, PI88Segments.name_tuples, self)
         # print(data.get_channel_dict(group_name))
+
+    def calc_segment_types(self):
+        for index, value in enumerate(self.time):
+            self.segment_type.append(self.get_segment_type(index))
+
+    def get_segment_type(self, index):
+        """
+        :param index: int
+        :return: SegmentType
+        """
+        if self.begin_demand[index] < self.end_demand[index]:
+            return SegmentType.LOAD
+        if self.begin_demand[index] > self.end_demand[index]:
+            return SegmentType.UNLOAD
+        if self.begin_demand[index] == self.end_demand[index] > 0:
+            return SegmentType.HOLD
+        return SegmentType.UNKNOWN
+
+    def get_segment_mask(self, array, segment_type, occurence=1):
+        """
+        Returns a boolean mask for selection from measurement data array
+        using the condition_function to select segment of interest.
+        :param condition_function:
+        :occurence: int, optional
+        :return: numpy.recarray
+        """
+        counter = 0
+        for i in range(len(self.begin_demand)):
+            if segment_type == self.segment_type[i]:
+                begin = self.timestamp_begin[i]
+                end = self.timestamp_end[i]
+                counter += 1
+            if counter == occurence:
+                break
+
+        return (begin <= array) & (array <= end)
 
 
 class PI88Settings:
@@ -150,6 +210,12 @@ class PI88Measurement:
     ]
 
     def __init__(self, filename):
+        # only to make code completition in pycharm work:
+        self.time = None
+        self.depth = None
+        self.load = None
+        # -------------------------------------------------
+
         # todo: how to make it work with 'with' statement
         data = tdm.TdmData(filename)
 
@@ -190,6 +256,18 @@ class PI88Measurement:
         if array is not None:
             mask = np.invert(np.isnan(array))
             setattr(self, attribute_name, array[mask])
+
+    def get_segment_curve(self, segment_type):
+        """
+        Returns data for time, depth and load belonging to segment_type.
+        :param segment_type: SegmentType
+        :return: list, list, list
+            time_data, depth_data, load_data
+        """
+        # todo: check, if it is right measurement type (e.g. quasi static, not aborted ...)
+        s = self.segments
+        mask = s.get_segment_mask(self.time, segment_type)
+        return self.time[mask], self.depth[mask], self.load[mask]
 
 
 if __name__ == "__main__":

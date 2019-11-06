@@ -13,6 +13,7 @@ import xml.etree.ElementTree
 
 import numpy as np
 
+
 # dictionary for converting from NI to NumPy datatypes
 DTYPE_CONVERTERS = {'eInt8Usi': 'i1',
                     'eInt16Usi': 'i2',
@@ -69,23 +70,23 @@ class TdmChannel:
 
     def __str__(self):
         return f"TdmChannel object\n" \
-               f"\tid: {self.id}\n" \
-               f"\tName: {self.name}\n" \
-               f"\tDescription: {self.description}\n" \
-               f"\tUnit: {self.unit}\n" \
-               f"\tdata type: {self.data_type}" \
-               f"\tinc: {self.inc}"
+            f"\tid: {self.id}\n" \
+            f"\tName: {self.name}\n" \
+            f"\tDescription: {self.description}\n" \
+            f"\tUnit: {self.unit}\n" \
+            f"\tdata type: {self.data_type}" \
+            f"\tinc: {self.inc}"
 
 
 class TdmChannelGroup:
-    def __init__(self, root, id):
+    def __init__(self, root, _id):
         self.id = None
         self.name = None
         self.description = None
         self.channel_ids = []
         self.channels = []
 
-        self.read(root, id)
+        self.read(root, _id)
         self.read_channels(root)
 
     def read(self, root, _id):
@@ -109,10 +110,10 @@ class TdmChannelGroup:
 
     def __str__(self):
         return f"TdmChannelGroup object\n" \
-               f"\tid: {self.id}\n" \
-               f"\tName: {self.name}\n" \
-               f"\tDescription: {self.description}\n" \
-               f"\tChannel ids: {self.channel_ids.__str__()}"
+            f"\tid: {self.id}\n" \
+            f"\tName: {self.name}\n" \
+            f"\tDescription: {self.description}\n" \
+            f"\tChannel ids: {self.channel_ids.__str__()}"
 
 
 class TdmData:
@@ -262,8 +263,8 @@ class TdmData:
                 return {element.get("name"): element.text}
 
         result = {}
-        element = self.root.find(".//tdm_root//instance_attributes")
-        for child in element:
+        attributes = self.root.find(".//tdm_root//instance_attributes")
+        for child in attributes:
             result.update(get_name_value_pair(child))
 
         return result

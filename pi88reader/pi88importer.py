@@ -107,7 +107,7 @@ class PI88Segments:
 
     def _read(self, data):
         group_name = "Segments"
-        data._read_from_channel_group(group_name, PI88Segments.name_tuples, self)
+        data.read_from_channel_group(group_name, PI88Segments.name_tuples, self)
         # print(data.get_channel_dict(group_name))
 
     def calc_segment_types(self):
@@ -131,8 +131,9 @@ class PI88Segments:
         """
         Returns a boolean mask for selection from measurement data array
         using the condition_function to select segment of interest.
-        :param condition_function:
-        :occurence: int, optional
+        :param array:
+        :param segment_type:
+        :param occurence: int, optional
         :return: numpy.recarray
         """
         counter = 0
@@ -233,19 +234,19 @@ class PI88Measurement:
 
     def _read_quasi_static(self, data):
         group_name = "Indentation All Data Points"
-        data._read_from_channel_group(group_name, PI88Measurement.static_name_tuples, self)
+        data.read_from_channel_group(group_name, PI88Measurement.static_name_tuples, self)
         # print(data.channel_dict(group_name))
 
     def _read_average_dynamic(self, data):
         group_name = "Indentation Averaged Values"
-        data._read_from_channel_group(group_name, PI88Measurement.dynamic_name_tuples[0:7], self)
+        data.read_from_channel_group(group_name, PI88Measurement.dynamic_name_tuples[0:7], self)
         # print(data.channel_dict(group_name))
 
         group_name = "Basic Dynamic Averaged Values 1"
-        data._read_from_channel_group(group_name, PI88Measurement.dynamic_name_tuples[7:14], self)
+        data.read_from_channel_group(group_name, PI88Measurement.dynamic_name_tuples[7:14], self)
 
         group_name = "Visco-Elastic: Indentation Averaged Values 1"
-        data._read_from_channel_group(group_name, PI88Measurement.dynamic_name_tuples[14:], self)
+        data.read_from_channel_group(group_name, PI88Measurement.dynamic_name_tuples[14:], self)
 
     def remove_nans(self, attribute_name):
         """
@@ -271,6 +272,7 @@ class PI88Measurement:
                   f"depth[{self.depth_unit}]",
                   f"load[{self.load_unit}]"]
         return header, self.time, self.depth, self.load
+
     def get_segment_curve(self, segment_type):
         """
         Returns data for time, depth and load belonging to segment_type.

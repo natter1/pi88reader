@@ -231,7 +231,7 @@ class TdmData:
         else:
             setattr(to_object, attribute_name, None)
 
-    def _read_from_channel_group(self, group_name, name_tuples, to_object):
+    def read_from_channel_group(self, group_name, name_tuples, to_object):
         """
         Read channels data (names given in name_tuples) from group_name into
         to_object, by setting the attribute names given via name_tuples.

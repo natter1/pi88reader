@@ -214,6 +214,9 @@ class PI88Measurement:
         self.time = None
         self.depth = None
         self.load = None
+        self.time_unit = None
+        self.depth_unit = None
+        self.load_unit = None
         # -------------------------------------------------
 
         # todo: how to make it work with 'with' statement
@@ -257,17 +260,30 @@ class PI88Measurement:
             mask = np.invert(np.isnan(array))
             setattr(self, attribute_name, array[mask])
 
+    def get_quasi_static_curve(self):
+        """
+        Returns data for time, depth and load.
+        :return: list, list, list, list
+            header, time_data, depth_data, load_data
+        """
+        # todo: check, if it is right measurement type (e.g. quasi static)
+        header = [f"time [{self.time_unit}]",
+                  f"depth[{self.depth_unit}]",
+                  f"load[{self.load_unit}]"]
+        return header, self.time, self.depth, self.load
     def get_segment_curve(self, segment_type):
         """
         Returns data for time, depth and load belonging to segment_type.
         :param segment_type: SegmentType
-        :return: list, list, list
-            time_data, depth_data, load_data
+        :return: list, list, list, list
+            header, time_data, depth_data, load_data
         """
         # todo: check, if it is right measurement type (e.g. quasi static, not aborted ...)
-        s = self.segments
-        mask = s.get_segment_mask(self.time, segment_type)
-        return self.time[mask], self.depth[mask], self.load[mask]
+        mask = self.segments.get_segment_mask(self.time, segment_type)
+        header = [f"time [{self.time_unit}]",
+                  f"depth[{self.depth_unit}]",
+                  f"load[{self.load_unit}]"]
+        return header, self.time[mask], self.depth[mask], self.load[mask]
 
 
 if __name__ == "__main__":

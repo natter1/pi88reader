@@ -227,6 +227,7 @@ class TdmData:
     def _read_data(self, channel, attribute_name, to_object):
         if channel:
             setattr(to_object, attribute_name, self._get_data(channel.inc))
+            setattr(to_object, attribute_name+'_unit', channel.unit)
         else:
             setattr(to_object, attribute_name, None)
 

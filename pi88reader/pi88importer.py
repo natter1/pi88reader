@@ -4,6 +4,7 @@
 from enum import Enum
 
 import numpy as np
+import fenics
 
 import pi88reader.tdm_importer as tdm
 

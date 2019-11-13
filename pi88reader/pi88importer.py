@@ -4,9 +4,10 @@
 from enum import Enum
 
 import numpy as np
-import fenics
+
 
 import pi88reader.tdm_importer as tdm
+import pi88reader.pi88_to_pptx as pi88_to_pptx # import PI88ToPPTX
 
 
 def main():
@@ -15,6 +16,8 @@ def main():
     """
     measurement = PI88Measurement('..\\resources\\quasi_static_12000uN.tdm')
     # measurement = PI88Measurement('..\\resources\\nan_error_dyn_10000uN.tdm')
+
+    presentation = pi88_to_pptx.PI88ToPPTX(measurement)
 
     print(measurement.settings.dict)
     print(measurement.area_function.b)
@@ -212,6 +215,7 @@ class PI88Measurement:
     ]
 
     def __init__(self, filename):
+        self.filename =filename
         # only to make code completition in pycharm work:
         self.time = None
         self.depth = None

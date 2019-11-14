@@ -18,6 +18,21 @@ def copy_font(_from, _to):
     _to.underline = _from.underline
 
 
+def remove_unpopulated_shapes(slide):
+    """
+    Removes empty placeholders (e.g. due to layout) from slide.
+    Further testing needed.
+    :param slide: pptx.slide.Slide
+    :return:
+    """
+    for index in reversed(range(len(slide.shapes))):
+        shape = slide.shapes[index]
+        # if shape.is_placeholder and shape.text_frame.text == "":
+        if shape.has_text_frame and shape.text_frame.text == "":
+            shape.element.getparent().remove(shape.element)
+            print(f"removed index {index}")
+
+
 def change_paragraph_text_to(paragraph, text):
     """
     Change text of paragraph to text, but keep format.

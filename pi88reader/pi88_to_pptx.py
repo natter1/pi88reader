@@ -8,11 +8,14 @@ from datetime import datetime
 import pi88reader.pptx_template as pptx_template
 from pi88reader.pi88_matplotlib_tools import PI88Plotter as PI88Plotter
 
+
 # todo: - use layout example file
 # todo: - create title slide (contact data, creation date ...)
 
-# set to your template pptx
-TEMPLATE_FILENAME = '..\\resources\pptx\\ETIT_16-9.pptx'
+def main():
+    TEMPLATE_FILENAME = '..\\resources\pptx\\ETIT_16-9.pptx'
+    analyze_ppt(TEMPLATE_FILENAME)
+
 
 class PI88ToPPTX:
     TEMPLATE_FILENAME = '..\\resources\pptx\\ETIT_16-9.pptx'
@@ -20,24 +23,24 @@ class PI88ToPPTX:
         slides = []
         self.measurement = measurement
         self.plotter = PI88Plotter()
-        self.plotter.add_measurement(measurement)
+        self.plotter.add_measurements(measurement)
 
         self.create_presentation(use_tamplate)
         self.set_first_slide()
-
-        fig = self.plotter.get_load_displacement_plot((10,5))
-        picture = self.add_matplot_figure(fig, self.prs.slides[0])
+        fig_width = 8
+        fig_height = 4.5
+        fig = self.plotter.get_load_displacement_plot((fig_width,fig_height))
+        zoom = 1.0
+        picture = self.add_matplot_figure(fig, self.prs.slides[0], width=Inches(fig_height*zoom))
         picture.left = Inches(1)
         picture.top = Inches(3)
-        picture.width = Inches(5)
-        picture.height = Inches(2.5)
 
 
-        self.prs.save('delme.pptx')
+        self.prs.save("delme.pptx")
 
     def create_presentation(self, use_tamplate=True):
         if use_tamplate:
-            self.prs = Presentation(TEMPLATE_FILENAME)
+            self.prs = Presentation(self.TEMPLATE_FILENAME)
             setup_master_slide_big(self.prs.slide_masters[0])
             setup_master_slide_small(self.prs.slide_masters[1])
         else:
@@ -46,56 +49,29 @@ class PI88ToPPTX:
     def set_first_slide(self):
         layout = self.prs.slide_layouts[0]
         slide = self.prs.slides.add_slide(layout)
+        # slide.shapes[2].element.getparent().remove(slide.shapes[2].element)
         title = slide.shapes.title
         title.text = self.measurement.filename
+        pptx_template.remove_unpopulated_shapes(slide)
 
-    def add_matplot_figure(self, fig, slide):
+    def add_matplot_figure(self, fig, slide, **kwargs):
         """
-
+        kwargs["left"] = 0
+        kwargs["top"] = 0
         :param fig:
         :param slide:
         :return: pptx.shapes.picture.Picture
         """
         #left = top = Inches(1)
+        if not "left" in kwargs:
+            kwargs["left"] = 0
+        if not "top" in kwargs:
+            kwargs["top"] = 0
+
         with io.BytesIO() as output:
             fig.savefig(output, format="png")
-            pic = slide.shapes.add_picture(output, 0, 0)#, left, top)
+            pic = slide.shapes.add_picture(output, **kwargs) #0, 0)#, left, top)
         return pic
-
-
-def main(use_tamplate=True):
-    # ------------------------------------------------------------------------
-    # optional - useful when using a template
-    # prints shape names needed to modify slide masters
-    # ------------------------------------------------------------------------
-    pass
-    # analyze_ppt(TEMPLATE_FILENAME)
-    # # -------------------------------------------------------------------------
-    #
-    # if use_tamplate:
-    #     prs = Presentation(TEMPLATE_FILENAME)
-    #     setup_master_slide_big(prs.slide_masters[0])
-    #     setup_master_slide_small(prs.slide_masters[1])
-    # else:
-    #     prs = Presentation()
-    #
-    #
-    # title_slide_layout = prs.slide_layouts[0]
-    # slide = prs.slides.add_slide(title_slide_layout)
-    # title = slide.shapes.title
-    # # subtitle = slide.placeholders[1]
-    #
-    # title.text = "Hello, World!"
-    # # subtitle.text = "python-pptx was here!"
-    #
-    # fig = create_demo_figure()
-    # left = top = Inches(1)
-    # with io.BytesIO() as output:
-    #     fig.savefig(output, format="png")
-    #     pic = slide.shapes.add_picture(output, left, top)
-    #     pic.rotation = 30
-    #     print(type(pic))
-    # prs.save('delme.pptx')
 
 
 def setup_master_slide_big(slide_master):
@@ -185,5 +161,5 @@ def create_demo_figure():
     return figure
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()

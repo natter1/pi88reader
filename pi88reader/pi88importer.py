@@ -14,10 +14,13 @@ def main():
     """
     Called at end of file, if __name__ == "__main__"
     """
-    measurement = PI88Measurement('..\\resources\\quasi_static_12000uN.tdm')
+    # measurement = PI88Measurement('..\\resources\\quasi_static_12000uN.tdm')
+    measurement = PI88Measurement('..\\resources\\AuSn_Creep\\1000uN 01 LC.tdm')
     # measurement = PI88Measurement('..\\resources\\nan_error_dyn_10000uN.tdm')
+    print(measurement.filename)
 
     presentation = pi88_to_pptx.PI88ToPPTX(measurement)
+ #   to_excel = PI88ToExcel(filename)
 
     print(measurement.settings.dict)
     print(measurement.area_function.b)
@@ -278,7 +281,7 @@ class PI88Measurement:
                   f"load[{self.load_unit}]"]
         return header, self.time, self.depth, self.load
 
-    def get_segment_curve(self, segment_type):
+    def get_segment_curve(self, segment_type, occurence=1):
         """
         Returns data for time, depth and load belonging to segment_type.
         :param segment_type: SegmentType
@@ -286,7 +289,7 @@ class PI88Measurement:
             header, time_data, depth_data, load_data
         """
         # todo: check, if it is right measurement type (e.g. quasi static, not aborted ...)
-        mask = self.segments.get_segment_mask(self.time, segment_type)
+        mask = self.segments.get_segment_mask(self.time, segment_type, occurence=occurence)
         header = [f"time [{self.time_unit}]",
                   f"depth[{self.depth_unit}]",
                   f"load[{self.load_unit}]"]

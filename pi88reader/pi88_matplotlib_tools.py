@@ -3,6 +3,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+class PlotStyle:
+    def __init__(self, n_colors=10):
+        self.marker = dict(marker='o', markeredgewidth=0, markersize=2)
+        self.line = dict(linestyle='')
+        self.cmap = plt.cm.viridis(np.linspace(0, 1, n_colors))
+        self.current_color_index = 0
+
+    @property
+    def color(self):
+        assert 0 <= self.current_color_index < len(self.cmap), "current_color_index invalid!"
+        return self.cmap[self.current_color_index % len(self.cmap)]
+
+    def next_color(self):
+        self.current_color_index = (self.current_color_index + 1) % len(self.cmap)
 class PI88Plotter:
     def __init__(self):
         self.measurements = []
@@ -39,11 +53,10 @@ class PI88Plotter:
         return figure
 
 
-
-from pi88reader.pi88importer import PI88Measurement, SegmentType
-
-
 def main():
+    # todo: possible circular import!
+    from pi88reader.pi88importer import PI88Measurement, SegmentType
+
     filename = '..\\resources\\quasi_static_12000uN.tdm'
     measurement = PI88Measurement(filename)
 

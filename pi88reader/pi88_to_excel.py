@@ -1,5 +1,5 @@
 """
-todo: check pandas -> can write excel (?)
+todo: check pandas
 """
 from openpyxl import Workbook
 from openpyxl.styles import Font
@@ -9,33 +9,36 @@ from pi88reader.pi88importer import PI88Measurement, SegmentType
 
 def main():
     filename = '..\\resources\\quasi_static_12000uN.tdm'
-    to_excel = PI88ToExcel(filename)
-    # print(to_excel.measurement.get_segment_curve(SegmentType.LOAD))
-    # print(to_excel.measurement.settings.dict)
+    filename = '..\\resources\\AuSn_Creep\\1000uN 01 LC.tdm'
+    measurement = PI88Measurement(filename)
 
+    to_excel = PI88ToExcel(measurement)
     to_excel.write("delme.xlsx")
 
 
 class PI88ToExcel:
-    def __init__(self, tdm_filename):
-        self.measurement = PI88Measurement(tdm_filename)
-        self.tdm_filename = tdm_filename
+    def __init__(self, pi88_measurement):
+        self.measurement = pi88_measurement
+        self.workbook = Workbook()
+        self.workbook.remove(self.workbook.active)
 
     def write(self, filename):
-        wb = Workbook()
-        self.write_quasi_static_data(wb.active)
+        self.add_sheet_quasi_static_data()  # self.workbook.active)
+        self.add_sheet_segment_data()
+        self.workbook.save(filename=filename)
 
-        ws2 = wb.create_sheet(title="load_unload")
-        self.write_segment_data(ws2)
-        wb.save(filename=filename)
-
-    def write_quasi_static_data(self, ws):
-        ws.title = self.tdm_filename.split('.')[2].split('\\')[2]
+    def add_sheet_quasi_static_data(self):
+        wb = self.workbook
+        ws_title = self.measurement.filename.split('.')[2].split('\\')[2]
+        ws = wb.create_sheet(title=ws_title)
         data = self.measurement.get_quasi_static_curve()
         self.write_data(ws, data)
 
-    def write_segment_data(self, ws):
-        ws.title = "segments"
+    def add_sheet_segment_data(self):
+        wb = self.workbook
+        ws_title = "segments"
+        ws = wb.create_sheet(title=ws_title)
+
         ws.cell(row=1, column=1).value = "LOAD:"
         data = self.measurement.get_segment_curve(SegmentType.LOAD)
         self.write_data(ws, data, row=1, col=2)

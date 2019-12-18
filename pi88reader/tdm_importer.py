@@ -1,5 +1,5 @@
 """This module allows National Instruments TDM/TDX files to be accessed like
-NumPy structured arrays.
+NumPy structured arrays. Triboscan can save PI88 measurements in this file format.
 
 ==============================================================================
 Inspired by the module tdm-loader (https://pypi.org/project/tdm-loader/):
@@ -12,7 +12,6 @@ import warnings
 import xml.etree.ElementTree
 
 import numpy as np
-
 
 # dictionary for converting from NI to NumPy datatypes
 DTYPE_CONVERTERS = {'eInt8Usi': 'i1',
@@ -70,12 +69,12 @@ class TdmChannel:
 
     def __str__(self):
         return f"TdmChannel object\n" \
-            f"\tid: {self.id}\n" \
-            f"\tName: {self.name}\n" \
-            f"\tDescription: {self.description}\n" \
-            f"\tUnit: {self.unit}\n" \
-            f"\tdata type: {self.data_type}" \
-            f"\tinc: {self.inc}"
+               f"\tid: {self.id}\n" \
+               f"\tName: {self.name}\n" \
+               f"\tDescription: {self.description}\n" \
+               f"\tUnit: {self.unit}\n" \
+               f"\tdata type: {self.data_type}" \
+               f"\tinc: {self.inc}"
 
 
 class TdmChannelGroup:
@@ -110,10 +109,10 @@ class TdmChannelGroup:
 
     def __str__(self):
         return f"TdmChannelGroup object\n" \
-            f"\tid: {self.id}\n" \
-            f"\tName: {self.name}\n" \
-            f"\tDescription: {self.description}\n" \
-            f"\tChannel ids: {self.channel_ids.__str__()}"
+               f"\tid: {self.id}\n" \
+               f"\tName: {self.name}\n" \
+               f"\tDescription: {self.description}\n" \
+               f"\tChannel ids: {self.channel_ids.__str__()}"
 
 
 class TdmData:
@@ -227,7 +226,7 @@ class TdmData:
     def _read_data(self, channel, attribute_name, to_object):
         if channel:
             setattr(to_object, attribute_name, self._get_data(channel.inc))
-            setattr(to_object, attribute_name+'_unit', channel.unit)
+            setattr(to_object, attribute_name + '_unit', channel.unit)
         else:
             setattr(to_object, attribute_name, None)
 

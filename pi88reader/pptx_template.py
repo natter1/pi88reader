@@ -2,6 +2,60 @@
 This file contains variables with names of important pptx template master_slide shapes
 """
 # from pptx.enum.text import MSO_AUTO_SIZE
+from pptx import Presentation
+from datetime import datetime
+
+
+def analyze_pptx(template_file):
+    """ Take the given file and analyze the structure of master slides.
+    Prints shape names/ids and texts for SlideMaster-shapes
+    To get an output file contains marked up information
+    remove comment on last two lines of function.
+    This is helpful when manipulating template-files.
+    """
+    prs = Presentation(template_file)
+    # Each powerpoint file has multiple layouts
+    # Loop through them all and  see where the various elements are
+    slide_masters = prs.slide_masters
+    for index, slide_master in enumerate(prs.slide_masters):
+        print('------------------------------------')
+        print('------------------------------------')
+        print(f"slide master indexed: {index}")
+        print(slide_master)
+        print("text boxes:")
+        for shape in slide_master.shapes:
+            try:
+                dummystring = f"shape name: {shape.name} - shape text: {shape.text}"
+                shape.text = shape.name
+                print(dummystring)
+            except:
+                pass
+            #shape.text = 'hahahaha'
+        # for shape in slide_master.slideshapes:
+        #     print(shape)
+        print('------------------------------------')
+        for index, slide_layout in enumerate(slide_master.slide_layouts):
+            print(f"\tslide layout: {slide_layout.name}")
+            slide = prs.slides.add_slide(slide_master.slide_layouts[index])
+            # Not every slide has to have a title
+            try:
+                title = slide.shapes.title
+                title.text = 'Title for Layout {}'.format(index)
+            except AttributeError:
+                print("No Title for Layout {}".format(index))
+            # Go through all the placeholders and identify them by index and type
+            for shape in slide.placeholders:
+                if shape.is_placeholder:
+                    phf = shape.placeholder_format
+                    # Do not overwrite the title which is just a special placeholder
+                    try:
+                        if 'Title' not in shape.text:
+                            shape.text = 'Placeholder index:{} type:{}'.format(phf.idx, shape.name)
+                    except AttributeError:
+                        print("{} has no text attribute".format(phf.type))
+                    print(f"\t\tid: {phf.idx} - name: {shape.name}")
+    # output_file = '..\\resources\pptx\\template_names.pptx'
+    # prs.save(output_file)
 
 
 # todo: add something like this directly to python-pptx
@@ -51,12 +105,31 @@ def analyze_paragraphs(paragraphs):
         for run_index, run in enumerate(para.runs):
             print(f"\trun: {run.text}")
 
-# master_slides[0] (large red header bar; no slide numbers)
-class MasterSlideBig:
-    def __init__(self, slide_master):
-        self.slide_master = slide_master
+
+# ----------------------------------------------------------------------------
+# --------- Customized template classes are needed for each template ---------
+# ----------------------------------------------------------------------------
+class TemplateETIT169:
+    """
+    Class handling ETIT 16:9 template.
+    """
+    TEMPLATE_FILE = '..\\resources\pptx\\ETIT_16-9.pptx'
+
+    def __init__(self):
+        self.prs = Presentation(self.TEMPLATE_FILE)
+
+        self.slide_master_big = self.prs.slide_masters[0]
+        self.slide_master_small = self.prs.slide_masters[1]
+
+        self.big_layouts = {}
+        self.small_layouts = {}
+        # following names are the same for small and big master
         self.author_shape_name = "Rectangle 4"
         self.website_shape_name = "Rectangle 5"
+
+        date_time = datetime.now().strftime("%d %B, %Y")
+        self.set_author("Nathanael Jöhrmann", city="Chemnitz", date=date_time)
+        self.set_website("https://www.tu-chemnitz.de/etit/wetel/")
 
     def set_author(self, name, city=None, date=None):
         text= ""
@@ -66,17 +139,20 @@ class MasterSlideBig:
         if date:
             text += date + spacer
         text += name
-
-        for shape in self.slide_master.shapes:
-            if not shape.has_text_frame:
-                continue
-            if shape.name == self.author_shape_name:
-                change_paragraph_text_to(shape.text_frame.paragraphs[0], text)
-
+        self.write_text_to_master_shape(text=text, shape_name=self.author_shape_name)
 
     def set_website(self, text):
-        for shape in self.slide_master.shapes:
+        self.write_text_to_master_shape(text = text, shape_name=self.website_shape_name)
+
+    def write_text_to_master_shape(self, text, shape_name):
+        for shape in self.master_shapes:
             if not shape.has_text_frame:
                 continue
-            if shape.name == self.website_shape_name:
+            if shape.name == shape_name:
                 change_paragraph_text_to(shape.text_frame.paragraphs[0], text)
+    @property
+    def master_shapes(self):
+        result = []
+        result.extend(self.slide_master_big.shapes)
+        result.extend(self.slide_master_small.shapes)
+        return result

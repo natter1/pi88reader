@@ -1,14 +1,16 @@
-import os
 import glob
+import os
 from bisect import bisect
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+
+import pi88reader.my_styles as my_styles
+import pi88reader.pptx_creator as pptx_creator
+from pi88reader.pi88_matplotlib_tools import PlotStyle
 from pi88reader.pi88importer import PI88Measurement
 from pi88reader.pi88importer import SegmentType
-from pi88reader.pi88_matplotlib_tools import PlotStyle
-import pi88reader.my_styles as my_styles
-
-import pi88reader.pptx_creator as pptx_creator
+import pi88reader.pptx_template as pptx_template
 
 
 def main():
@@ -61,8 +63,8 @@ def main():
     figure.savefig(path + "stress_strain.png")
     dlog_figure.savefig(path + "dlog_stress_strain.png")
 
-    pptx = pptx_creator.PPTXCreator(use_tamplate=True, title="Creep via Ni on AuSn")
-    pptx.add_matplot_figure(dlog_figure, slide_index=0, top_rel=0.22)
+    pptx = pptx_creator.PPTXCreator(template_class=pptx_template.TemplateETIT169, title="Creep via Ni on AuSn")
+    pptx.add_matplotlib_figure(dlog_figure, slide_index=0, top_rel=0.22)
     pptx.save(path+"NI_on_AuSn.pptx")
 
 

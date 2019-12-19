@@ -1,7 +1,6 @@
-import numpy as np
 import matplotlib.pyplot as plt
 import numpy as np
-import pi88reader.my_styles as my_styles
+
 
 class PlotStyle:
     def __init__(self, n_colors=4):
@@ -31,6 +30,7 @@ class PlotStyle:
     def next_style(self):
         self.next_color()
         self.next_marker()
+
 
 class PI88Plotter:
     def __init__(self):
@@ -70,7 +70,7 @@ class PI88Plotter:
 
 def main():
     # todo: possible circular import!
-    from pi88reader.pi88importer import PI88Measurement, SegmentType
+    from pi88reader.pi88importer import PI88Measurement
 
     filename = '..\\resources\\quasi_static_12000uN.tdm'
     measurement = PI88Measurement(filename)

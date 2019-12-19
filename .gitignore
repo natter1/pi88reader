@@ -102,3 +102,4 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+/resources/pptx/ETIT_16-9.pptx

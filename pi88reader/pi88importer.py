@@ -5,9 +5,8 @@ from enum import Enum
 
 import numpy as np
 
-
+import pi88reader.pi88_to_pptx as pi88_to_pptx  # import PI88ToPPTX
 import pi88reader.tdm_importer as tdm
-import pi88reader.pi88_to_pptx as pi88_to_pptx # import PI88ToPPTX
 
 
 def main():

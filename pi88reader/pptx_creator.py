@@ -1,18 +1,25 @@
 """
-
+This module provides an easier Interface to create *.pptx presentations using the module python-pptx.
+@author: Nathanael Jöhrmann
 """
-from pptx.util import Inches
-from pptx import Presentation
 import io
 from datetime import datetime
+
+from pptx import Presentation
+from pptx.util import Inches
+
 import pi88reader.pptx_template as pptx_template
 
 
+# todo: template_file to Enum in pptx_template with all available templates
 class PPTXCreator:
-    def __init__(self, use_tamplate=True, template_file = '..\\resources\pptx\\ETIT_16-9.pptx', title="Title"):
-        slides = []
-        self.template_file = template_file
-        self.create_presentation(use_tamplate)
+    def __init__(self, template_class=None, title="Title"):
+        self.slides = []
+        self.template = None
+        self.prs = None
+        self.create_presentation(template_class)
+        self.default_layout = self.prs.slide_masters[0]
+        # self.template_file = template_file
         self.set_first_slide(title=title)
 
         # picture = self.add_matplot_figure(fig, self.prs.slides[0], width=Inches(fig_height*zoom))
@@ -20,67 +27,68 @@ class PPTXCreator:
         # picture.left = Inches(1)
         # picture.top = Inches(3)
 
-    def relative_width_to_inch(self, value):
-        result = Inches(self.prs.slide_width.inches * value)
+    def fraction_width_to_inch(self, fraction):
+        """
+        Returns a width in inches calculated as a fraction "value" of total slide-width.
+        :param fraction:
+        :return:
+        """
+        result = Inches(self.prs.slide_width.inches * fraction)
         return result
 
-    def relative_height_to_inch(self, value):
-        return Inches(self.prs.slide_height.inches * value)
+    def fraction_height_to_inch(self, fraction):
+        return Inches(self.prs.slide_height.inches * fraction)
 
     def save(self, filename="delme.pptx"):
         self.prs.save(filename)
 
     def create_presentation(self, use_template=True):
         if use_template:
-            self.prs = Presentation(self.template_file)
-            self.setup_master_slide_big(self.prs.slide_masters[0])
-            # todo: slide_small
-            self.setup_master_slide_small(self.prs.slide_masters[1])
+            self.template = pptx_template.TemplateETIT169()
+            self.prs = self.template.prs
         else:
             self.prs = Presentation()
 
-    def setup_master_slide_big(self, slide_master):
-        """
-        This function is just an example. It has to be customized
-        to fit with the used template.
-        :param slide_master:
-        :return:
-        """
-        date_time = datetime.now()
-
-        master = pptx_template.MasterSlideBig(slide_master)
-        master.set_author("Nathanael Jöhrmann", city="Chemnitz", date=date_time.strftime("%d %B, %Y"))
-        master.set_website("https://www.tu-chemnitz.de/etit/wetel/")
-
-    def setup_master_slide_small(self, slide_master):
-        pass
-
     def set_first_slide(self, title):
-        layout = self.prs.slide_layouts[0]
+        layout = self.prs.slide_masters[1].slide_layouts[0]
         slide = self.prs.slides.add_slide(layout)
         # slide.shapes[2].element.getparent().remove(slide.shapes[2].element)
         title_shape = slide.shapes.title
         title_shape.text = title  # self.measurement.filename
         pptx_template.remove_unpopulated_shapes(slide)
 
-    def add_matplot_figure(self, fig, slide_index, top_rel = 0.0, left_rel = 0.0, **kwargs):
+    def write_position_in_kwargs(self, left_rel=0.0, top_rel=0.0, kwargs={}):
         """
-        Add a motplotlib figure fig to slide with index slide_index
-        :param fig:
-        :param slide_index:
-        :param top_rel: distance from slide top (relative to slide height)
-        :param left_rel: distance from slide left (relative to slide width)
+        This method modifies(!) the argument kwargs by adding or changing the entries "left" and "top".
+        :param left_rel:
+        :param top_rel:
         :param kwargs:
-        :return: pptx.shapes.picture.Picture
+        :return: None
         """
-        # left = top = Inches(1)
-        left = self.relative_width_to_inch(left_rel)
-        top = self.relative_height_to_inch(top_rel)
+        left = self.fraction_width_to_inch(left_rel)
+        top = self.fraction_height_to_inch(top_rel)
 
         if not "left" in kwargs:
-            kwargs["left"] = left  # 0
+            kwargs["left"] = left
+        else:
+            kwargs["left"] = kwargs["left"] + left
         if not "top" in kwargs:
-            kwargs["top"] = top  # 0
+            kwargs["top"] = top
+        else:
+            kwargs["top"] = kwargs["top"] + top
+
+    def add_matplotlib_figure(self, fig, slide_index, left_rel=0.0, top_rel=0.0, **kwargs):
+        """
+        Add a motplotlib figure fig to slide with index slide_index. With top_rel and left_rel
+        it is possible to position the figure in Units of slide height/width (float in range [0, 1].
+        :param fig: a matplolib figure
+        :param slide_index: index of slide in presentation on which to insert fig
+        :param left_rel: distance from slide left (relative to slide width)
+        :param top_rel: distance from slide top (relative to slide height)
+        :param kwargs: e.g. "left" and "top" to position figure [inches] starting from (rel_left, rel_top)
+        :return: pptx.shapes.picture.Picture
+        """
+        self.write_position_in_kwargs(left_rel=left_rel, top_rel=top_rel, kwargs=kwargs)
         # todo: check slide_index
         slide = self.prs.slides[slide_index]
         with io.BytesIO() as output:

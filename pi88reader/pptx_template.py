@@ -113,7 +113,7 @@ class TemplateETIT169:
     """
     Class handling ETIT 16:9 template.
     """
-    TEMPLATE_FILE = '..\\resources\pptx\\ETIT_16-9.pptx'
+    TEMPLATE_FILE = '..\\resources\pptx-template\\example-template.pptx'
 
     def __init__(self):
         self.prs = Presentation(self.TEMPLATE_FILE)

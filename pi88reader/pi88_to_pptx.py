@@ -13,7 +13,7 @@ from pi88reader.pptx_creator import PPTXCreator as PPTXCreator
 # todo: - create title slide (contact data, creation date ...)
 
 def main():
-    TEMPLATE_FILENAME = '..\\resources\pptx\\ETIT_16-9.pptx'
+    TEMPLATE_FILENAME = '..\\resources\pptx\\example-template.pptx'
     analyze_ppt(TEMPLATE_FILENAME)
 
 

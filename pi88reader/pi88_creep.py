@@ -4,6 +4,7 @@ from bisect import bisect
 
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.ticker as ticker
 
 import pi88reader.my_styles as my_styles
 import pi88reader.pptx_creator as pptx_creator
@@ -17,16 +18,18 @@ def main():
     # path = "..\\resources\\AuSn_Creep\\"
     # path = "..\\resources\\AuSn_Creep\\1000uN\\"
     # path = "..\\resources\\AuSn_Creep\\4000uN\\"
-    path = "..\\resources\\AuSn_Creep\\10000uN\\"
+    # path = "..\\resources\\AuSn_Creep\\10000uN\\"
     # path = "..\\resources\\AuSn_Creep\\12500uN\\"
     # path = "..\\resources\\AuSn_Creep\\12500uN_2\\"
     # path = "..\\resources\\AuSn_Creep\\DMA\\"
+    path = "..\\resources\\creep_example\\"
 
     files = get_tdm_files(path)
     # files.extend(get_tdm_files(path_2))
 
     figure, axes = create_figure(x_label=r"F/A [$N/m^2$]", y_label="creep rate [1/s]")
     dlog_figure, dlog_axes = create_figure(x_label=r"F/A [$N/m^2$]", y_label="creep rate [1/s]")
+    load_disp_figure, load_disp_axes = create_figure(x_label="displacement [nm]", y_label=r"load [$\mathrm{\mu N}$]")
     style = PlotStyle(len(files))
     print(style.cmap)
     style.cmap = my_styles.CMAP_BERNHARD
@@ -41,16 +44,7 @@ def main():
         # add_dlog_plot(dlog_axes, x=load_over_area_avg, y=creep_rate_avg, style=style, label=measurement.filename, fit_deg=1)
         add_dlog_plot(dlog_axes, x=load_over_area_avg, y=creep_rate_avg, style=style, label="", fit_deg=1)
         axes.plot(load_over_area_avg, creep_rate_avg, **style.marker, **style.line, label=measurement.filename)
-
-        # color = 'red'
-        # if counter > 9:
-        #     color = 'yellow'
-        # elif counter > 6:
-        #     color = "blue"
-        # elif counter > 3:
-        #     color = "green"
-        # axes.plot(load_over_area_avg, creep_rate_avg, **style.marker, **style.line, label=measurement.filename, color=color)
-
+        load_disp_axes.plot(measurement.depth, measurement.load, **style.marker, **style.line, label=measurement.filename)
     # for measurement in self.measurements:
     #     x = measurement.depth
     #     y = measurement.load
@@ -58,13 +52,17 @@ def main():
     #     # axes.scatter(x, y, **marker_style)
     axes.legend()
     dlog_axes.legend()
+    load_disp_axes.legend()
     figure.tight_layout()
     dlog_figure.tight_layout()
+    load_disp_figure.tight_layout()
     figure.savefig(path + "stress_strain.png")
     dlog_figure.savefig(path + "dlog_stress_strain.png")
+    load_disp_figure.savefig(path + "load_disp.png")
 
     pptx = pptx_creator.PPTXCreator(template_class=pptx_template.TemplateETIT169, title="Creep via Ni on AuSn")
     pptx.add_matplotlib_figure(dlog_figure, slide_index=0, top_rel=0.22)
+    pptx.add_matplotlib_figure(load_disp_figure, slide_index=0, top_rel=0.22, left_rel=0.5)
     pptx.save(path+"NI_on_AuSn.pptx")
 
 
@@ -137,6 +135,7 @@ def get_avg_strain_rate_and_sigma(measurement):
 def add_dlog_plot(axes, x, y, style, label="", fit_deg=0):
     axes.loglog(x, y, **style.marker, **style.line, label=label,
                 color=style.color, fillstyle="none")
+
     if fit_deg:
         log_x = np.log(x)
         log_y = np.log(y)
@@ -146,6 +145,13 @@ def add_dlog_plot(axes, x, y, style, label="", fit_deg=0):
         # label = rf"$y = {coeffs[0]:.2f}x {coeffs[1]:+.2f}$"
         label = rf"$n = {coeffs[0]:.2f}$"
         axes.plot(x, yfit(x), color=style.color, marker="", label=label)
+
+    # needed to prevent overlapping labels:
+    locs = axes.get_xticklabels(minor=True)
+    if len(locs)>5:
+        axes.xaxis.set_minor_formatter(ticker.NullFormatter())
+        axes.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
+
     style.next_style()
 
 

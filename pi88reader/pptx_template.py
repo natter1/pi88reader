@@ -111,10 +111,10 @@ def analyze_paragraphs(paragraphs):
 # ----------------------------------------------------------------------------
 class TemplateETIT169:
     """
-    Class handling ETIT 16:9 template.
+    Class handling ETIT 16:9 template (or example-template.pptx).
     """
-    TEMPLATE_FILE = '..\\resources\pptx-template\\example-template.pptx'
-
+    TEMPLATE_FILE = '..\\resources\pptx_template\\example-template.pptx'
+    # TEMPLATE_FILE = '..\\resources\pptx_template\\ETIT_16-9.pptx'
     def __init__(self):
         self.prs = Presentation(self.TEMPLATE_FILE)
 

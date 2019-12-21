@@ -3,7 +3,6 @@ This module provides an easier Interface to create *.pptx presentations using th
 @author: Nathanael Jöhrmann
 """
 import io
-from datetime import datetime
 
 from pptx import Presentation
 from pptx.util import Inches
@@ -13,11 +12,22 @@ import pi88reader.pptx_template as pptx_template
 
 # todo: template_file to Enum in pptx_template with all available templates
 class PPTXCreator:
-    def __init__(self, template_class=None, title="Title"):
+    """
+    This Class provides an easy interface to create a PowerPoint presentation.
+        - position elements as fraction of slide height/width
+        - add matplotlib figures
+        - use pptx templates (in combination with pptx_template.py)
+    """
+    def __init__(self, template=None, title="Title"):
+        """
+
+        :param template:
+        :param title:
+        """
         self.slides = []
         self.template = None
         self.prs = None
-        self.create_presentation(template_class)
+        self.create_presentation(template)
         self.default_layout = self.prs.slide_masters[0]
         # self.template_file = template_file
         self.set_first_slide(title=title)
@@ -29,22 +39,37 @@ class PPTXCreator:
 
     def fraction_width_to_inch(self, fraction):
         """
-        Returns a width in inches calculated as a fraction "value" of total slide-width.
-        :param fraction:
-        :return:
+        Returns a width in inches calculated as a fraction of total slide-width.
+        :param fraction: float
+        :return: Calculated Width in inch
         """
         result = Inches(self.prs.slide_width.inches * fraction)
         return result
 
     def fraction_height_to_inch(self, fraction):
+        """
+        Returns a height in inches calculated as a fraction of total slide-height.
+        :param fraction: float
+        :return: Calculated Width in inch
+        """
         return Inches(self.prs.slide_height.inches * fraction)
 
     def save(self, filename="delme.pptx"):
+        """
+        Saves the presentation under the given filename.
+        :param filename: string
+        :return: None
+        """
         self.prs.save(filename)
 
-    def create_presentation(self, use_template=True):
-        if use_template:
-            self.template = pptx_template.TemplateETIT169()
+    def create_presentation(self, template=None):
+        """
+
+        :param template:
+        :return:
+        """
+        if template:
+            self.template = template  # pptx_template.TemplateETIT169()
             self.prs = self.template.prs
         else:
             self.prs = Presentation()

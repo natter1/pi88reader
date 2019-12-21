@@ -1,9 +1,92 @@
 """
 This file contains variables with names of important pptx template master_slide shapes
 """
+from datetime import datetime
+
 # from pptx.enum.text import MSO_AUTO_SIZE
 from pptx import Presentation
-from datetime import datetime
+
+from pi88reader.better_abc import ABCMeta, abstract_attribute
+
+
+class AbstractTemplate(metaclass=ABCMeta):
+    """
+    Templates should subclass this abstract class, to make sure,
+    that all important attributes/methodes are defined.
+    """
+    @abstract_attribute
+    def TEMPLATE_FILE(cls):
+        pass
+
+    @abstract_attribute
+    def prs(self):
+        pass
+
+
+# ----------------------------------------------------------------------------
+# --------- Customized template classes are needed for each template ---------
+# ----------------------------------------------------------------------------
+class TemplateExample(AbstractTemplate):
+    """
+    Class handling example-template.pptx).
+    """
+    TEMPLATE_FILE = '..\\resources\pptx_template\\example-template.pptx'
+
+    def __init__(self):
+        self.prs = Presentation(self.TEMPLATE_FILE)
+
+        self.slide_master_big = self.prs.slide_masters[0]
+        self.slide_master_small = self.prs.slide_masters[1]
+
+        self.big_layouts = {}
+        self.small_layouts = {}
+        # following names are the same for small and big master
+        self.author_shape_name = "Rectangle 4"
+        self.website_shape_name = "Rectangle 5"
+
+        date_time = datetime.now().strftime("%d %B, %Y")
+        self.set_author("Nathanael Jöhrmann", city="Chemnitz", date=date_time)
+        self.set_website("https://github.com/natter1/pi88reader")
+
+    def set_author(self, name, city=None, date=None):
+        text= ""
+        spacer = " ∙ "
+        if city:
+            text += city + spacer
+        if date:
+            text += date + spacer
+        text += name
+        self.write_text_to_master_shape(text=text, shape_name=self.author_shape_name)
+
+    def set_website(self, text):
+        self.write_text_to_master_shape(text = text, shape_name=self.website_shape_name)
+
+    def write_text_to_master_shape(self, text, shape_name):
+        for shape in self.master_shapes:
+            if not shape.has_text_frame:
+                continue
+            if shape.name == shape_name:
+                change_paragraph_text_to(shape.text_frame.paragraphs[0], text)
+    @property
+    def master_shapes(self):
+        result = []
+        result.extend(self.slide_master_big.shapes)
+        result.extend(self.slide_master_small.shapes)
+        return result
+
+
+# ETIT_16-9.pptx is not part of the repository due to legal restrictions!
+class TemplateETIT169(TemplateExample):
+    """
+    Class handling ETIT 16:9 template.
+    """
+    TEMPLATE_FILE = '..\\resources\pptx_template\\ETIT_16-9.pptx'
+    def __init__(self):
+        super().__init__()
+        date_time = datetime.now().strftime("%d %B, %Y")
+        self.set_author("Nathanael Jöhrmann", city="Chemnitz", date=date_time)
+        self.set_website("https://www.tu-chemnitz.de/etit/wetel/")
+
 
 
 def analyze_pptx(template_file):
@@ -104,55 +187,3 @@ def analyze_paragraphs(paragraphs):
         print(f"index: {index} - text: {para.text}")
         for run_index, run in enumerate(para.runs):
             print(f"\trun: {run.text}")
-
-
-# ----------------------------------------------------------------------------
-# --------- Customized template classes are needed for each template ---------
-# ----------------------------------------------------------------------------
-class TemplateETIT169:
-    """
-    Class handling ETIT 16:9 template (or example-template.pptx).
-    """
-    TEMPLATE_FILE = '..\\resources\pptx_template\\example-template.pptx'
-    # TEMPLATE_FILE = '..\\resources\pptx_template\\ETIT_16-9.pptx'
-    def __init__(self):
-        self.prs = Presentation(self.TEMPLATE_FILE)
-
-        self.slide_master_big = self.prs.slide_masters[0]
-        self.slide_master_small = self.prs.slide_masters[1]
-
-        self.big_layouts = {}
-        self.small_layouts = {}
-        # following names are the same for small and big master
-        self.author_shape_name = "Rectangle 4"
-        self.website_shape_name = "Rectangle 5"
-
-        date_time = datetime.now().strftime("%d %B, %Y")
-        self.set_author("Nathanael Jöhrmann", city="Chemnitz", date=date_time)
-        self.set_website("https://www.tu-chemnitz.de/etit/wetel/")
-
-    def set_author(self, name, city=None, date=None):
-        text= ""
-        spacer = " ∙ "
-        if city:
-            text += city + spacer
-        if date:
-            text += date + spacer
-        text += name
-        self.write_text_to_master_shape(text=text, shape_name=self.author_shape_name)
-
-    def set_website(self, text):
-        self.write_text_to_master_shape(text = text, shape_name=self.website_shape_name)
-
-    def write_text_to_master_shape(self, text, shape_name):
-        for shape in self.master_shapes:
-            if not shape.has_text_frame:
-                continue
-            if shape.name == shape_name:
-                change_paragraph_text_to(shape.text_frame.paragraphs[0], text)
-    @property
-    def master_shapes(self):
-        result = []
-        result.extend(self.slide_master_big.shapes)
-        result.extend(self.slide_master_small.shapes)
-        return result

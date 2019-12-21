@@ -60,7 +60,8 @@ def main():
     dlog_figure.savefig(path + "dlog_stress_strain.png")
     load_disp_figure.savefig(path + "load_disp.png")
 
-    pptx = pptx_creator.PPTXCreator(template_class=pptx_template.TemplateETIT169, title="Creep via Ni on AuSn")
+    # pptx = pptx_creator.PPTXCreator(template=pptx_template.TemplateETIT169(), title="Creep via Ni on AuSn")
+    pptx = pptx_creator.PPTXCreator(template=pptx_template.TemplateExample(), title="Creep Example")
     pptx.add_matplotlib_figure(dlog_figure, slide_index=0, top_rel=0.22)
     pptx.add_matplotlib_figure(load_disp_figure, slide_index=0, top_rel=0.22, left_rel=0.5)
     pptx.save(path+"NI_on_AuSn.pptx")

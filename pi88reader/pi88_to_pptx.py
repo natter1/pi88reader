@@ -1,30 +1,37 @@
-import io
+"""
+@author: Nathanael Jöhrmann
+"""
+import glob
+import os
 from datetime import datetime
 
 import matplotlib.pyplot as plt
-from pptx import Presentation
-from pptx.util import Inches
 
 import pi88reader.pptx_template as pptx_template
-from pi88reader.pi88_matplotlib_tools import PI88Plotter as PI88Plotter
-from pi88reader.pptx_creator import PPTXCreator as PPTXCreator
+from pi88reader.pi88_importer import PI88Measurement
+from pi88reader.pi88_plotter import PI88Plotter
+from pi88reader.pptx_creator import PPTXCreator
+
 
 # todo: - use layout example file
 # todo: - create title slide (contact data, creation date ...)
-
 def main():
     TEMPLATE_FILENAME = '..\\resources\pptx\\example-template.pptx'
-    analyze_ppt(TEMPLATE_FILENAME)
+    pptx_template.analyze_pptx(TEMPLATE_FILENAME)
 
 
 class PI88ToPPTX:
-    def __init__(self, measurement, use_tamplate=True, title="Title"):
-        slides = []
-        self.measurement = measurement
-        self.plotter = PI88Plotter()
-        self.plotter.add_measurements(measurement)
+    def __init__(self, measurements_path=None, template=None):
+        self.path = measurements_path
+        self.measurements = []
+        if self.path:
+            self.load_tdm_files(measurements_path)
+        self.plotter = PI88Plotter(self.measurements)
+        self.pptx_creator = None
+        self.pptx = None
+        self.create_pptx(template=template)
+        self.position = self.pptx_creator.position
 
-        # self.pptx = PPTXCreator(use_tamplate, title=title)
         # fig_width = 8
         # fig_height = 4.5
         # fig = self.plotter.get_load_displacement_plot((fig_width,fig_height))
@@ -32,6 +39,30 @@ class PI88ToPPTX:
         # picture = self.add_matplotlib_figure(fig, self.prs.slides[0], width=Inches(fig_height*zoom))
         # picture.left = Inches(1)
         # picture.top = Inches(3)
+
+    def create_pptx(self, template=None):
+        self.pptx_creator = PPTXCreator(template=template)
+        self.pptx = self.pptx_creator.prs
+
+    def load_tdm_files(self, path):
+        files = glob.glob(os.path.join(path, '*.tdm'))
+        files.sort(key=os.path.getctime)  # sorted by creation time (using windows)
+        for file in files:
+            self.measurements.append(PI88Measurement(file))
+
+    def add_matplotlib_figure(self, fig, slide_index, pptx_position=None, **kwargs):
+        """
+        :param fig:
+        :param slide_index:
+        :param pptx_position:
+        :param kwargs: e.g. width and height
+        :return: pptx.shapes.picture.Picture
+        """
+        return self.pptx_creator.add_matplotlib_figure(fig, slide_index, pptx_position, **kwargs)
+
+    def add_summary_slide(self, layout=None):
+        slide = self.pptx_creator.add_slide("Summary", layout)
+
 
     def save(self, filename="delme.pptx"):
         self.prs.save(filename)

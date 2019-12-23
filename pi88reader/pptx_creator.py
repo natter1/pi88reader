@@ -10,6 +10,68 @@ from pptx.util import Inches
 import pi88reader.pptx_template as pptx_template
 
 
+class PPTXPosition:
+    """
+    Used to generate positions of elements in slide coordiinates
+    """
+    def __init__(self, presentation, left_rel=0.0, top_rel=0.0, left=0, top=0):
+        """
+        :param presentation: pptx.prs (needed for slide width and height)
+        :param left_rel: distance from slide left (relative to slide width)
+        :param top_rel: distance from slide top (relative to slide height)
+        :param left: "left" to position figure [inches] starting from rel_left
+        :param top: "top" to position figure [inches] starting from rel_top
+        """
+        self.prs = presentation
+        self.left_rel = left_rel
+        self.top_rel = top_rel
+        self.left = left
+        self.top = top
+
+    def set(self, left_rel=0.0, top_rel=0.0, left=0, top=0):
+        self.left_rel = left_rel
+        self.top_rel = top_rel
+        self.left = left
+        self.top = top
+
+    def dict_for_position(self, left_rel=0.0, top_rel=0.0, left=0, top=0):
+        """
+        Returns kwargs dict for given position. Does not change attributes of self
+        :param left_rel: float [slide_width]
+        :param top_rel: float [slide_height]
+        :param left: float [inch]
+        :param top: float [inch]
+        :return: dictionary
+        """
+        left = self.fraction_width_to_inch(left_rel) + left
+        top = self.fraction_height_to_inch(top_rel) + top
+        return {"left": left, "top": top}
+
+    def dict(self):
+        """
+        This method returns a kwargs dict containing "left" and "top".
+        :return: dictionary
+        """
+        return self.dict_for_position(self.left_rel, self.top_rel, self.left, self.top)
+
+    def fraction_width_to_inch(self, fraction):
+        """
+        Returns a width in inches calculated as a fraction of total slide-width.
+        :param fraction: float
+        :return: Calculated Width in inch
+        """
+        result = Inches(self.prs.slide_width.inches * fraction)
+        return result
+
+    def fraction_height_to_inch(self, fraction):
+        """
+        Returns a height in inches calculated as a fraction of total slide-height.
+        :param fraction: float
+        :return: Calculated Width in inch
+        """
+        return Inches(self.prs.slide_height.inches * fraction)
+
+
 # todo: template_file to Enum in pptx_template with all available templates
 class PPTXCreator:
     """
@@ -18,9 +80,8 @@ class PPTXCreator:
         - add matplotlib figures
         - use pptx templates (in combination with pptx_template.py)
     """
-    def __init__(self, template=None, title="Title"):
+    def __init__(self, template=None):
         """
-
         :param template:
         :param title:
         """
@@ -29,8 +90,9 @@ class PPTXCreator:
         self.prs = None
         self.create_presentation(template)
         self.default_layout = self.prs.slide_masters[0]
+        self.position = PPTXPosition(self.prs)
         # self.template_file = template_file
-        self.set_first_slide(title=title)
+        # self.set_first_slide(title=title)
 
         # picture = self.add_matplot_figure(fig, self.prs.slides[0], width=Inches(fig_height*zoom))
 
@@ -74,13 +136,19 @@ class PPTXCreator:
         else:
             self.prs = Presentation()
 
-    def set_first_slide(self, title):
-        layout = self.prs.slide_masters[1].slide_layouts[0]
+    def create_title_slide(self, title, layout=None):
+        if not layout:
+            layout = self.default_layout.slide_layouts[0]
+        self.add_slide(title, layout)
+
+    def add_slide(self, title, layout=None):
+        if not layout:
+            layout = self.default_layout.slide_layouts[1]
         slide = self.prs.slides.add_slide(layout)
-        # slide.shapes[2].element.getparent().remove(slide.shapes[2].element)
         title_shape = slide.shapes.title
-        title_shape.text = title  # self.measurement.filename
-        pptx_template.remove_unpopulated_shapes(slide)
+        title_shape.text = title
+        self.remove_unpopulated_shapes(slide)
+        return slide
 
     def write_position_in_kwargs(self, left_rel=0.0, top_rel=0.0, kwargs={}):
         """
@@ -102,21 +170,37 @@ class PPTXCreator:
         else:
             kwargs["top"] = kwargs["top"] + top
 
-    def add_matplotlib_figure(self, fig, slide_index, left_rel=0.0, top_rel=0.0, **kwargs):
+    def add_matplotlib_figure(self, fig, slide_index, pptx_position, **kwargs):
         """
         Add a motplotlib figure fig to slide with index slide_index. With top_rel and left_rel
         it is possible to position the figure in Units of slide height/width (float in range [0, 1].
+        :param pptx_position: PPTXPosition
         :param fig: a matplolib figure
         :param slide_index: index of slide in presentation on which to insert fig
-        :param left_rel: distance from slide left (relative to slide width)
-        :param top_rel: distance from slide top (relative to slide height)
-        :param kwargs: e.g. "left" and "top" to position figure [inches] starting from (rel_left, rel_top)
+        :param kwargs:
         :return: pptx.shapes.picture.Picture
         """
-        self.write_position_in_kwargs(left_rel=left_rel, top_rel=top_rel, kwargs=kwargs)
+        if not pptx_position:
+            pptx_position = self.position
+        kwargs.update(pptx_position.dict())
         # todo: check slide_index
         slide = self.prs.slides[slide_index]
         with io.BytesIO() as output:
             fig.savefig(output, format="png")
             pic = slide.shapes.add_picture(output, **kwargs)  # 0, 0)#, left, top)
         return pic
+
+    @staticmethod
+    def remove_unpopulated_shapes(slide):
+        """
+        Removes empty placeholders (e.g. due to layout) from slide.
+        Further testing needed.
+        :param slide: pptx.slide.Slide
+        :return:
+        """
+        for index in reversed(range(len(slide.shapes))):
+            shape = slide.shapes[index]
+            # if shape.is_placeholder and shape.text_frame.text == "":
+            if shape.has_text_frame and shape.text_frame.text == "":
+                shape.element.getparent().remove(shape.element)
+                print(f"removed index {index}")

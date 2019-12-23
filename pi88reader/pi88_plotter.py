@@ -1,5 +1,9 @@
+"""
+@author: Nathanael Jöhrmann
+"""
 import matplotlib.pyplot as plt
 import numpy as np
+
 
 class PI88Plotter:
     """
@@ -10,6 +14,7 @@ class PI88Plotter:
         self.measurements = []
         self.add_measurements(pi88_measurements)
         self.figsize = (5.6, 5.0)
+        self.dpi = 150
 
         self.marker_style = dict(marker='o', markeredgewidth=0, markersize=2)
         self.line_style = dict(linestyle='')
@@ -28,7 +33,7 @@ class PI88Plotter:
             self.measurements.append(measurements)
 
     def create_figure_with_axes(self, x_label="", y_label=""):
-        figure = plt.figure(figsize=self.figsize, dpi=150, facecolor='w', edgecolor='w', frameon=True)
+        figure = plt.figure(figsize=self.figsize, dpi=self.dpi, facecolor='w', edgecolor='w', frameon=True)
         axes = figure.add_subplot()
         axes.set_xlabel(x_label)
         axes.set_ylabel(y_label)

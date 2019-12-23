@@ -4,7 +4,7 @@ todo: check pandas
 from openpyxl import Workbook
 from openpyxl.styles import Font
 
-from pi88reader.pi88importer import PI88Measurement, SegmentType
+from pi88reader.pi88_importer import PI88Measurement, SegmentType
 
 
 def main():

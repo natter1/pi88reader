@@ -9,10 +9,29 @@ import matplotlib.ticker as ticker
 import pi88reader.my_styles as my_styles
 import pi88reader.pptx_creator as pptx_creator
 from pi88reader.pi88_matplotlib_tools import PlotStyle
-from pi88reader.pi88importer import PI88Measurement
-from pi88reader.pi88importer import SegmentType
+from pi88reader.pi88_importer import PI88Measurement
+from pi88reader.pi88_importer import SegmentType
 import pi88reader.pptx_template as pptx_template
+from pi88reader.pi88_plotter import PI88Plotter
 
+
+class PI88CreepReporter:
+    def __init__(self, measurements_path=None):
+        self.measurements = []
+        if measurements_path:
+            self.load_tdm_files(measurements_path)
+        self.plotter = PI88Plotter(self.measurements)
+        self.ppzx = None
+
+    def create_pptx(self, template_class=None):
+        pass
+
+    def load_tdm_files(self, path):
+        files = glob.glob(os.path.join(path, '*.tdm'))
+        files.sort(key=os.path.getctime)  # sorted by creation time (using windows)
+        for file in files:
+            self.measurements.append(PI88Measurement(file))
+        # return files
 
 def main():
     # path = "..\\resources\\AuSn_Creep\\"
@@ -27,8 +46,8 @@ def main():
     files = get_tdm_files(path)
     # files.extend(get_tdm_files(path_2))
 
-    figure, axes = create_figure(x_label=r"F/A [$N/m^2$]", y_label="creep rate [1/s]")
-    dlog_figure, dlog_axes = create_figure(x_label=r"F/A [$N/m^2$]", y_label="creep rate [1/s]")
+    figure, axes = create_figure(x_label=r"F/A [$\mathrm{N/m^2}$]", y_label="creep rate [1/s]")
+    dlog_figure, dlog_axes = create_figure(x_label=r"F/A [$\mathrm{N/m^2}$]", y_label="creep rate [1/s]")
     load_disp_figure, load_disp_axes = create_figure(x_label="displacement [nm]", y_label=r"load [$\mathrm{\mu N}$]")
     style = PlotStyle(len(files))
     print(style.cmap)
@@ -65,12 +84,6 @@ def main():
     pptx.add_matplotlib_figure(dlog_figure, slide_index=0, top_rel=0.22)
     pptx.add_matplotlib_figure(load_disp_figure, slide_index=0, top_rel=0.22, left_rel=0.5)
     pptx.save(path+"NI_on_AuSn.pptx")
-
-
-def get_tdm_files(path):
-    files = glob.glob(os.path.join(path, '*.tdm'))
-    files.sort(key=os.path.getctime)  # sorted by creation time (in windows)
-    return files
 
 
 def create_figure(x_label="", y_label=""):

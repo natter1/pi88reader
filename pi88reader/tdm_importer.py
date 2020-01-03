@@ -10,6 +10,7 @@ import os.path
 import re
 import warnings
 import xml.etree.ElementTree
+from dataclasses import dataclass, field, InitVar
 
 import numpy as np
 
@@ -33,18 +34,18 @@ def get_usi_from_string(string):
     else:
         return re.findall("id\(\"(.+?)\"\)", string)
 
-
+@dataclass()
 class TdmChannel:
-    def __init__(self, root, _id):
-        self.xml_root = root
-        self.id = _id
-        self.name = None
-        self.description = None
-        self.unit = None
-        self.inc = None
-        self.data_type = None
-        self.local_columns_usi = None
+    xml_root: xml.etree.ElementTree.Element = field(repr=False)
+    id: str
+    name: str = None
+    description: str = None
+    unit: str = None
+    inc: str = None
+    data_type: str = None
+    local_columns_usi: str = None
 
+    def __post_init__(self):
         self.read()
 
     def read(self):
@@ -67,24 +68,27 @@ class TdmChannel:
         return self.xml_root.find(
             f".//{data_type}[@id='{data_usi}']/values").get('external')
 
-    def __str__(self):
-        return f"TdmChannel object\n" \
-               f"\tid: {self.id}\n" \
-               f"\tName: {self.name}\n" \
-               f"\tDescription: {self.description}\n" \
-               f"\tUnit: {self.unit}\n" \
-               f"\tdata type: {self.data_type}" \
-               f"\tinc: {self.inc}"
+    # def __str__(self):
+    #     return f"TdmChannel object\n" \
+    #            f"\tid: {self.id}\n" \
+    #            f"\tName: {self.name}\n" \
+    #            f"\tDescription: {self.description}\n" \
+    #            f"\tUnit: {self.unit}\n" \
+    #            f"\tdata type: {self.data_type}" \
+    #            f"\tinc: {self.inc}"
 
 
+@dataclass()
 class TdmChannelGroup:
-    def __init__(self, root, _id):
-        self.id = None
-        self.name = None
-        self.description = None
-        self.channel_ids = []
-        self.channels = []
+    id: str = field(default_factory=str, init=False)
+    name: str = field(default_factory=str, init=False)
+    description: str = field(default_factory=str, init=False)
+    channel_ids: list = field(default_factory=list, init=False)
+    channels: list = field(default_factory=list, init=False)
+    root: InitVar[any]
+    _id: InitVar[any]
 
+    def __post_init__(self, root, _id):
         self.read(root, _id)
         self.read_channels(root)
 
@@ -98,8 +102,6 @@ class TdmChannelGroup:
     def read_channels(self, root):
         for channel_id in self.channel_ids:
             self.channels.append(TdmChannel(root, channel_id))
-
-    #        print(self.channels[0])
 
     def get_channel(self, channel_name):
         result = [x for x in self.channels if x.name == channel_name]

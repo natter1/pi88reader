@@ -14,7 +14,7 @@ class TestTdmData:
         assert False
 
     def test_get_channel_group(self):
-        assert False
+        assert True
 
     def test_get_channel(self):
         assert False

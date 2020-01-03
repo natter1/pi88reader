@@ -4,7 +4,7 @@ import numpy as np
 import pylatex
 import tornado.web
 
-from pi88reader.pi88importer import PI88Measurement, SegmentType
+from pi88reader.pi88_importer import PI88Measurement, SegmentType
 
 
 def main():

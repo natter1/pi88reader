@@ -5,7 +5,6 @@ from enum import Enum
 
 import numpy as np
 
-import pi88reader.pi88_to_pptx as pi88_to_pptx  # import PI88ToPPTX
 import pi88reader.tdm_importer as tdm
 
 
@@ -14,6 +13,7 @@ def main():
     Called at end of file, if __name__ == "__main__"
     """
     # measurement = PI88Measurement('..\\resources\\quasi_static_12000uN.tdm')
+    import pi88reader.pi88_to_pptx as pi88_to_pptx  # import PI88ToPPTX
     measurement = PI88Measurement('..\\resources\\AuSn_Creep\\1000uN 01 LC.tdm')
     # measurement = PI88Measurement('..\\resources\\nan_error_dyn_10000uN.tdm')
     print(measurement.filename)

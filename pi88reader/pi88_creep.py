@@ -1,17 +1,21 @@
-import glob
-import os
+"""
+@author: Nathanael Jöhrmann
+"""
 from bisect import bisect
 
 import matplotlib.pyplot as plt
-import numpy as np
 import matplotlib.ticker as ticker
+import numpy as np
 
-import pi88reader.my_styles as my_styles
-import pi88reader.pptx_creator as pptx_creator
-from pi88reader.pi88_matplotlib_tools import PlotStyle
-from pi88reader.pi88importer import PI88Measurement
-from pi88reader.pi88importer import SegmentType
 import pi88reader.pptx_template as pptx_template
+from pi88reader.pi88_importer import SegmentType
+from pi88reader.pi88_to_pptx import PI88ToPPTX
+from pi88reader.pptx_creator import PPTXPosition
+
+
+class PI88CreepReporterPPTX(PI88ToPPTX):
+    def __init__(self, measurements_path=None, template=None):
+        super().__init__(measurements_path, template)
 
 
 def main():
@@ -24,52 +28,56 @@ def main():
     # path = "..\\resources\\AuSn_Creep\\DMA\\"
     path = "..\\resources\\creep_example\\"
 
-    files = get_tdm_files(path)
-    # files.extend(get_tdm_files(path_2))
+    reporter = PI88CreepReporterPPTX(path)
+    reporter.create_pptx(pptx_template.TemplateExample())
+    reporter.pptx_creator.create_title_slide("Title")
+    figure, axes = create_figure(x_label=r"F/A [$\mathrm{N/m^2}$]", y_label="creep rate [1/s]")
+    position = PPTXPosition(reporter.pptx, 0.2, 0.6)
+    reporter.add_matplotlib_figure(figure, 0, position)
+    reporter.add_summary_slide()
+    reporter.pptx_creator.save()
 
-    figure, axes = create_figure(x_label=r"F/A [$N/m^2$]", y_label="creep rate [1/s]")
-    dlog_figure, dlog_axes = create_figure(x_label=r"F/A [$N/m^2$]", y_label="creep rate [1/s]")
-    load_disp_figure, load_disp_axes = create_figure(x_label="displacement [nm]", y_label=r"load [$\mathrm{\mu N}$]")
-    style = PlotStyle(len(files))
-    print(style.cmap)
-    style.cmap = my_styles.CMAP_BERNHARD
-    style.marker_map = my_styles.MARKER_BERNHARD
-    axes.set_prop_cycle(color=style.cmap, marker=style.marker_map)
-    dlog_axes.set_prop_cycle(color=style.cmap, marker=style.marker_map)
-
-    for file in files:
-        measurement = PI88Measurement(file)
-        creep_rate_avg, load_over_area_avg = get_avg_strain_rate_and_sigma(measurement)
-
-        # add_dlog_plot(dlog_axes, x=load_over_area_avg, y=creep_rate_avg, style=style, label=measurement.filename, fit_deg=1)
-        add_dlog_plot(dlog_axes, x=load_over_area_avg, y=creep_rate_avg, style=style, label="", fit_deg=1)
-        axes.plot(load_over_area_avg, creep_rate_avg, **style.marker, **style.line, label=measurement.filename)
-        load_disp_axes.plot(measurement.depth, measurement.load, **style.marker, **style.line, label=measurement.filename)
-    # for measurement in self.measurements:
-    #     x = measurement.depth
-    #     y = measurement.load
-    #     axes.plot(x, y, **marker_style, **line_style)
-    #     # axes.scatter(x, y, **marker_style)
-    axes.legend()
-    dlog_axes.legend()
-    load_disp_axes.legend()
-    figure.tight_layout()
-    dlog_figure.tight_layout()
-    load_disp_figure.tight_layout()
-    figure.savefig(path + "stress_strain.png")
-    dlog_figure.savefig(path + "dlog_stress_strain.png")
-    load_disp_figure.savefig(path + "load_disp.png")
-
-    pptx = pptx_creator.PPTXCreator(template_class=pptx_template.TemplateETIT169, title="Creep via Ni on AuSn")
-    pptx.add_matplotlib_figure(dlog_figure, slide_index=0, top_rel=0.22)
-    pptx.add_matplotlib_figure(load_disp_figure, slide_index=0, top_rel=0.22, left_rel=0.5)
-    pptx.save(path+"NI_on_AuSn.pptx")
-
-
-def get_tdm_files(path):
-    files = glob.glob(os.path.join(path, '*.tdm'))
-    files.sort(key=os.path.getctime)  # sorted by creation time (in windows)
-    return files
+#     files = get_tdm_files(path)
+#     files.extend(get_tdm_files(path_2))
+#
+#     figure, axes = create_figure(x_label=r"F/A [$\mathrm{N/m^2}$]", y_label="creep rate [1/s]")
+#     dlog_figure, dlog_axes = create_figure(x_label=r"F/A [$\mathrm{N/m^2}$]", y_label="creep rate [1/s]")
+#     load_disp_figure, load_disp_axes = create_figure(x_label="displacement [nm]", y_label=r"load [$\mathrm{\mu N}$]")
+#     style = PlotStyle(len(files))
+#     print(style.cmap)
+#     style.cmap = my_styles.CMAP_BERNHARD
+#     style.marker_map = my_styles.MARKER_BERNHARD
+#     axes.set_prop_cycle(color=style.cmap, marker=style.marker_map)
+#     dlog_axes.set_prop_cycle(color=style.cmap, marker=style.marker_map)
+#
+#     for file in files:
+#         measurement = PI88Measurement(file)
+#         creep_rate_avg, load_over_area_avg = get_avg_strain_rate_and_sigma(measurement)
+#
+#         # add_dlog_plot(dlog_axes, x=load_over_area_avg, y=creep_rate_avg, style=style, label=measurement.filename, fit_deg=1)
+#         add_dlog_plot(dlog_axes, x=load_over_area_avg, y=creep_rate_avg, style=style, label="", fit_deg=1)
+#         axes.plot(load_over_area_avg, creep_rate_avg, **style.marker, **style.line, label=measurement.filename)
+#         load_disp_axes.plot(measurement.depth, measurement.load, **style.marker, **style.line, label=measurement.filename)
+#     # for measurement in self.measurements:
+#     #     x = measurement.depth
+#     #     y = measurement.load
+#     #     axes.plot(x, y, **marker_style, **line_style)
+#     #     # axes.scatter(x, y, **marker_style)
+#     axes.legend()
+#     dlog_axes.legend()
+#     load_disp_axes.legend()
+#     figure.tight_layout()
+#     dlog_figure.tight_layout()
+#     load_disp_figure.tight_layout()
+#     figure.savefig(path + "stress_strain.png")
+#     dlog_figure.savefig(path + "dlog_stress_strain.png")
+#     load_disp_figure.savefig(path + "load_disp.png")
+#
+#     # pptx = pptx_creator.PPTXCreator(template=pptx_template.TemplateETIT169(), title="Creep via Ni on AuSn")
+#     pptx = pptx_creator.PPTXCreator(template=pptx_template.TemplateExample(), title="Creep Example")
+#     pptx.add_matplotlib_figure(dlog_figure, slide_index=0, top_rel=0.22)
+#     pptx.add_matplotlib_figure(load_disp_figure, slide_index=0, top_rel=0.22, left_rel=0.5)
+#     pptx.save(path+"NI_on_AuSn.pptx")
 
 
 def create_figure(x_label="", y_label=""):

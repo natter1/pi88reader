@@ -89,7 +89,8 @@ class PPTXCreator:
         self.template = None
         self.prs = None
         self.create_presentation(template)
-        self.default_layout = self.prs.slide_masters[0]
+        self.title_layout = self.prs.slide_masters[0].slide_layouts[0]
+        self.default_layout = self.prs.slide_masters[1].slide_layouts[0]
         self.position = PPTXPosition(self.prs)
         # self.template_file = template_file
         # self.set_first_slide(title=title)
@@ -138,12 +139,12 @@ class PPTXCreator:
 
     def create_title_slide(self, title, layout=None):
         if not layout:
-            layout = self.default_layout.slide_layouts[0]
+            layout = self.title_layout
         self.add_slide(title, layout)
 
     def add_slide(self, title, layout=None):
         if not layout:
-            layout = self.default_layout.slide_layouts[1]
+            layout = self.default_layout
         slide = self.prs.slides.add_slide(layout)
         title_shape = slide.shapes.title
         title_shape.text = title

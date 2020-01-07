@@ -7,8 +7,6 @@ import io
 from pptx import Presentation
 from pptx.util import Inches
 
-import pi88reader.pptx_template as pptx_template
-
 
 class PPTXPosition:
     """

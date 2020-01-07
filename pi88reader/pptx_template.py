@@ -22,6 +22,14 @@ class AbstractTemplate(metaclass=ABCMeta):
     def prs(self):
         pass
 
+    @abstract_attribute
+    def title_layout(cls):
+        pass
+
+    @abstract_attribute
+    def default_layout(cls):
+        pass
+
 
 # ----------------------------------------------------------------------------
 # --------- Customized template classes are needed for each template ---------
@@ -35,12 +43,10 @@ class TemplateExample(AbstractTemplate):
     def __init__(self):
         self.prs = Presentation(self.TEMPLATE_FILE)
 
-        self.slide_master_big = self.prs.slide_masters[0]
-        self.slide_master_small = self.prs.slide_masters[1]
+        self.title_layout = self.prs.slide_masters[0].slide_layouts[0]
+        self.default_layout = self.prs.slide_masters[1].slide_layouts[0]
 
-        self.big_layouts = {}
-        self.small_layouts = {}
-        # following names are the same for small and big master
+        # following names are the same for both slide masters
         self.author_shape_name = "Rectangle 4"
         self.website_shape_name = "Rectangle 5"
 
@@ -49,7 +55,7 @@ class TemplateExample(AbstractTemplate):
         self.set_website("https://github.com/natter1/pi88reader")
 
     def set_author(self, name, city=None, date=None):
-        text= ""
+        text = ""
         spacer = " ∙ "
         if city:
             text += city + spacer
@@ -70,8 +76,8 @@ class TemplateExample(AbstractTemplate):
     @property
     def master_shapes(self):
         result = []
-        result.extend(self.slide_master_big.shapes)
-        result.extend(self.slide_master_small.shapes)
+        for slide_master in self.prs.slide_masters:
+            result.extend(slide_master.shapes)
         return result
 
 
@@ -81,12 +87,12 @@ class TemplateETIT169(TemplateExample):
     Class handling ETIT 16:9 template.
     """
     TEMPLATE_FILE = '..\\resources\pptx_template\\ETIT_16-9.pptx'
+
     def __init__(self):
         super().__init__()
         date_time = datetime.now().strftime("%d %B, %Y")
         self.set_author("Nathanael Jöhrmann", city="Chemnitz", date=date_time)
         self.set_website("https://www.tu-chemnitz.de/etit/wetel/")
-
 
 
 def analyze_pptx(template_file):

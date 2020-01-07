@@ -60,8 +60,9 @@ class PI88ToPPTX:
         """
         return self.pptx_creator.add_matplotlib_figure(fig, slide_index, pptx_position, **kwargs)
 
-    def add_summary_slide(self, layout=None):
-        slide = self.pptx_creator.add_slide("Summary", layout)
+    def create_summary_slide(self, layout=None):
+        result = self.pptx_creator.add_slide("Summary", layout)
+        return result
 
 
     def save(self, filename="delme.pptx"):

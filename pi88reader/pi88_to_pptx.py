@@ -13,10 +13,9 @@ from pi88reader.pi88_plotter import PI88Plotter
 from pi88reader.pptx_creator import PPTXCreator
 
 
-# todo: - use layout example file
 # todo: - create title slide (contact data, creation date ...)
 def main():
-    TEMPLATE_FILENAME = '..\\resources\pptx\\example-template.pptx'
+    TEMPLATE_FILENAME = '..\\resources\pptx_template\\example-template.pptx'
     pptx_template.analyze_pptx(TEMPLATE_FILENAME)
 
 
@@ -30,7 +29,7 @@ class PI88ToPPTX:
         self.pptx_creator = None
         self.pptx = None
         self.create_pptx(template=template)
-        self.position = self.pptx_creator.position
+        self.position = self.pptx_creator.default_position
 
         # fig_width = 8
         # fig_height = 4.5

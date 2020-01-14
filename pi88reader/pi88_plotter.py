@@ -1,16 +1,20 @@
 """
 @author: Nathanael Jöhrmann
 """
+from typing import Union, List, Tuple, Iterable
+from matplotlib.figure import Figure
+from matplotlib.pyplot import Axes
 import matplotlib.pyplot as plt
 import numpy as np
+
+from pi88reader.pi88_importer import PI88Measurement
 
 
 class PI88Plotter:
     """
     Used to plot data from PI88 measuremnts with matplotlib
-    :param pi88_measurements: pi88_measurement or list of pi88_measurements
     """
-    def __init__(self, pi88_measurements):
+    def __init__(self, pi88_measurements: Union[PI88Measurement, List[PI88Measurement]]):
         self.measurements = []
         self.add_measurements(pi88_measurements)
         self.figsize = (5.6, 5.0)
@@ -20,19 +24,17 @@ class PI88Plotter:
         self.line_style = dict(linestyle='')
         self.colors = plt.cm.viridis(np.linspace(0, 1, len(self.measurements)))
 
-    def add_measurements(self, measurements):
+    def add_measurements(self, measurements: Union[PI88Measurement, Iterable[PI88Measurement]]) -> None:
         """
         Adds a single PI88Measurement or a list o PI88Measurement's to the plotter.
-
-        :param measurements: PI88Measurement or list of PI88Measurement
-        :return:
         """
-        try:
-            self.measurements.extend(measurements)
-        except:
-            self.measurements.append(measurements)
+        if measurements:
+            try:
+                self.measurements.extend(measurements)
+            except:
+                self.measurements.append(measurements)
 
-    def create_figure_with_axes(self, x_label="", y_label=""):
+    def create_figure_with_axes(self, x_label: str = "", y_label: str = "") -> Tuple[Figure, Axes]:
         figure = plt.figure(figsize=self.figsize, dpi=self.dpi, facecolor='w', edgecolor='w', frameon=True)
         axes = figure.add_subplot()
         axes.set_xlabel(x_label)

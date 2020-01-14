@@ -66,8 +66,7 @@ class PI88CreepReporterPPTX(PI88ToPPTX):  # todo: switch plotting to pi88_plotte
         load_disp_figure.tight_layout()
 
         result = self.pptx_creator.create_title_slide(title)
-        position = PPTXPosition(self.pptx, 0.05, 0.25)
-        self.add_matplotlib_figure(load_disp_figure, slide_index=0, pptx_position=position)  #  top_rel=0.22, left_rel=0.5)
+        self.add_matplotlib_figure(load_disp_figure, slide_index=0, pptx_position=PPTXPosition(0.05, 0.25))
         return result
 
     def create_summary_slide(self, layout=None):
@@ -87,8 +86,8 @@ def main():
     reporter = PI88CreepReporterPPTX(path, pptx_template.TemplateExample())
     reporter.create_title_slide("Creep example")
     # figure, axes = create_figure(x_label=r"F/A [$\mathrm{N/m^2}$]", y_label="creep rate [1/s]")
-    # position = PPTXPosition(reporter.pptx, 0.2, 0.6)
-    # reporter.add_matplotlib_figure(figure, 0, position)
+    # default_position = PPTXPosition(reporter.pptx, 0.2, 0.6)
+    # reporter.add_matplotlib_figure(figure, 0, default_position)
     reporter.create_summary_slide()
     reporter.pptx_creator.save()
 

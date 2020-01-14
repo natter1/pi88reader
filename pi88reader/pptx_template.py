@@ -170,7 +170,7 @@ def change_paragraph_text_to(paragraph, text):
     """
     font = paragraph.runs[0].font
     paragraph.text = text
-    copy_font(font, paragraph.runs[0].font)
+    copy_font(_from=font, to=paragraph.runs[0].font)
 
 
 def analyze_paragraphs(paragraphs):

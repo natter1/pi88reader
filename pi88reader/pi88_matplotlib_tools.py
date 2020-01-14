@@ -40,6 +40,7 @@ class PlotStyle:
 def main():
     # todo: possible circular import!
     from pi88reader.pi88_importer import PI88Measurement
+    from pi88reader.pi88_plotter import PI88Plotter
 
     filename = '..\\resources\\quasi_static_12000uN.tdm'
     measurement = PI88Measurement(filename)

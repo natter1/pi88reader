@@ -7,16 +7,16 @@ from datetime import datetime
 
 import matplotlib.pyplot as plt
 
-import pi88reader.pptx_template as pptx_template
+import pptx_tools.templates as pptx_templates
 from pi88reader.pi88_importer import PI88Measurement
 from pi88reader.pi88_plotter import PI88Plotter
-from pi88reader.pptx_creator import PPTXCreator
+from pptx_tools.creator import PPTXCreator
 
 
 # todo: - create title slide (contact data, creation date ...)
 def main():
     TEMPLATE_FILENAME = '..\\resources\pptx_template\\example-template.pptx'
-    pptx_template.analyze_pptx(TEMPLATE_FILENAME)
+    pptx_templates.analyze_pptx(TEMPLATE_FILENAME)
 
 
 class PI88ToPPTX:
@@ -65,7 +65,7 @@ class PI88ToPPTX:
 
 
     def save(self, filename="delme.pptx"):
-        self.prs.save(filename)
+        self.pptx.save(filename)
 
     # def set_first_slide(self):
     #     layout = self.prs.slide_layouts[0]
@@ -73,7 +73,7 @@ class PI88ToPPTX:
     #     # slide.shapes[2].element.getparent().remove(slide.shapes[2].element)
     #     title = slide.shapes.title
     #     title.text = self.measurement.filename
-    #     pptx_template.remove_unpopulated_shapes(slide)
+    #     pptx_templates.remove_unpopulated_shapes(slide)
 
     # def add_matplotlib_figure(self, fig, slide, **kwargs):
     #     """
@@ -104,7 +104,7 @@ def setup_master_slide_big(slide_master):
     """
     date_time = datetime.now()
 
-    master = pptx_template.MasterSlideBig(slide_master)
+    master = pptx_templates.MasterSlideBig(slide_master)
     master.set_author("Nathanael Jöhrmann", city="Chemnitz", date=date_time.strftime("%d %B, %Y"))
     master.set_website("https://www.tu-chemnitz.de/etit/wetel/")
 

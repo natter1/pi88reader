@@ -25,9 +25,7 @@ def main():
     zoom = 1
     picture = pptx.add_matplotlib_figure(fig, title_slide, PPTXPosition(0.2, 0.25),
                                          width=Inches(fig_width * zoom))
-    # reposition picture:
-    # picture.left = Inches(1)
-    # picture.top = Inches(3)
+
 
     zoom = 0.2
     pptx.add_matplotlib_figure(fig, title_slide, PPTXPosition(0.7, 0.25), width=Inches(fig_width * zoom))
@@ -37,6 +35,9 @@ def main():
 
 
 class PPTXPosition:
+    # reposition picture:
+    # picture.left = Inches(1)
+    # picture.top = Inches(3)
     """
     Used to generate positions of elements in slide coordiinates
     saves pptx presentation in class (PPTXPosition.prs) - this allows to call methods without setting prs each time:

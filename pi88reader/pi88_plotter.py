@@ -31,7 +31,7 @@ class PI88Plotter:
         if measurements:
             try:
                 self.measurements.extend(measurements)
-            except:
+            except TypeError:
                 self.measurements.append(measurements)
 
     def create_figure_with_axes(self, x_label: str = "", y_label: str = "") -> Tuple[Figure, Axes]:

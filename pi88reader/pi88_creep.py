@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 
-import pi88reader.pptx_template as pptx_template
+from pptx_tools.templates import TemplateExample
 from pi88reader import my_styles
 from pi88reader.pi88_importer import SegmentType
 from pi88reader.pi88_matplotlib_tools import PlotStyle
 from pi88reader.pi88_to_pptx import PI88ToPPTX
-from pi88reader.pptx_creator import PPTXPosition
+from pptx_tools.creator import PPTXPosition
 
 
 class PI88CreepReporterPPTX(PI88ToPPTX):  # todo: switch plotting to pi88_plotter
@@ -66,7 +66,7 @@ class PI88CreepReporterPPTX(PI88ToPPTX):  # todo: switch plotting to pi88_plotte
         load_disp_figure.tight_layout()
 
         result = self.pptx_creator.create_title_slide(title)
-        self.add_matplotlib_figure(load_disp_figure, slide_index=0, pptx_position=PPTXPosition(0.05, 0.25))
+        self.add_matplotlib_figure(load_disp_figure, slide_index=result, pptx_position=PPTXPosition(0.05, 0.25))
         return result
 
     def create_summary_slide(self, layout=None):

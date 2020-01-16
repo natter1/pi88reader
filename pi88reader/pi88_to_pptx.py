@@ -4,10 +4,11 @@
 import glob
 import os
 from datetime import datetime
+from typing import Union, Iterable
 
 import matplotlib.pyplot as plt
 
-import pptx_tools.templates as pptx_templates
+from pptx_tools.templates import analyze_pptx
 from pi88reader.pi88_importer import PI88Measurement
 from pi88reader.pi88_plotter import PI88Plotter
 from pptx_tools.creator import PPTXCreator
@@ -16,7 +17,7 @@ from pptx_tools.creator import PPTXCreator
 # todo: - create title slide (contact data, creation date ...)
 def main():
     TEMPLATE_FILENAME = '..\\resources\pptx_template\\example-template.pptx'
-    pptx_templates.analyze_pptx(TEMPLATE_FILENAME)
+    analyze_pptx(TEMPLATE_FILENAME)
 
 
 class PI88ToPPTX:
@@ -26,9 +27,8 @@ class PI88ToPPTX:
         if self.path:
             self.load_tdm_files(measurements_path)
         self.plotter = PI88Plotter(self.measurements)
-        self.pptx_creator = None
-        self.pptx = None
-        self.create_pptx(template=template)
+        self.pptx_creator = PPTXCreator(template=template)
+        self.pptx = self.pptx_creator.prs
         self.position = self.pptx_creator.default_position
 
         # fig_width = 8
@@ -39,17 +39,23 @@ class PI88ToPPTX:
         # picture.left = Inches(1)
         # picture.top = Inches(3)
 
-    def create_pptx(self, template=None):
-        self.pptx_creator = PPTXCreator(template=template)
-        self.pptx = self.pptx_creator.prs
-
-    def load_tdm_files(self, path):
+    def load_tdm_files(self, path: str, sort_key=os.path.getctime):  # sorted by creation time (using windows)
         files = glob.glob(os.path.join(path, '*.tdm'))
-        files.sort(key=os.path.getctime)  # sorted by creation time (using windows)
+        files.sort(key=sort_key)
         for file in files:
             self.measurements.append(PI88Measurement(file))
 
-    def add_matplotlib_figure(self, fig, slide_index, pptx_position=None, **kwargs):
+    def add_measurements(self, measurements: Union[PI88Measurement, Iterable[PI88Measurement]]) -> None:
+        """
+        Adds a single PI88Measurement or a list o PI88Measurement's to the plotter.
+        """
+        if measurements:
+            try:
+                self.measurements.extend(measurements)
+            except TypeError:
+                self.measurements.append(measurements)
+
+    def add_matplotlib_figure(self, fig, slide, pptx_position=None, **kwargs):
         """
         :param fig:
         :param slide_index:
@@ -57,7 +63,7 @@ class PI88ToPPTX:
         :param kwargs: e.g. width and height
         :return: pptx.shapes.picture.Picture
         """
-        return self.pptx_creator.add_matplotlib_figure(fig, slide_index, pptx_position, **kwargs)
+        return self.pptx_creator.add_matplotlib_figure(fig, slide, pptx_position, **kwargs)
 
     def create_summary_slide(self, layout=None):
         result = self.pptx_creator.add_slide("Summary", layout)
@@ -93,24 +99,6 @@ class PI88ToPPTX:
     #         fig.savefig(output, format="png")
     #         pic = slide.shapes.add_picture(output, **kwargs) #0, 0)#, left, top)
     #     return pic
-
-
-def setup_master_slide_big(slide_master):
-    """
-    This function is just an example. It has to be customized
-    to fit with the used template.
-    :param slide_master:
-    :return:
-    """
-    date_time = datetime.now()
-
-    master = pptx_templates.MasterSlideBig(slide_master)
-    master.set_author("Nathanael Jöhrmann", city="Chemnitz", date=date_time.strftime("%d %B, %Y"))
-    master.set_website("https://www.tu-chemnitz.de/etit/wetel/")
-
-
-def setup_master_slide_small(slide_master):
-    pass
 
 
 

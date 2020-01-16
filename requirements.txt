@@ -1,3 +1,4 @@
 openpyxl
 numpy
 matplotlib
+python-pptx-interface

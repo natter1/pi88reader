@@ -15,3 +15,7 @@ class TemplateETIT169(TemplateExample):
         date_time = datetime.now().strftime("%d %B, %Y")
         self.set_author("Nathanael Jöhrmann", city="Chemnitz", date=date_time)
         self.set_website("https://www.tu-chemnitz.de/etit/wetel/")
+
+    def set_confidential(self, flag: bool = True):
+        # todo: add confidential marker in master layout when flag == True
+        pass

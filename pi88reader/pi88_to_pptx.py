@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from pptx_tools.templates import analyze_pptx
 from pi88reader.pi88_importer import PI88Measurement
 from pi88reader.pi88_plotter import PI88Plotter
-from pptx_tools.creator import PPTXCreator
+from pptx_tools.creator import PPTXCreator, PPTXPosition
 
 
 # todo: - create title slide (contact data, creation date ...)
@@ -66,7 +66,11 @@ class PI88ToPPTX:
         return self.pptx_creator.add_matplotlib_figure(fig, slide, pptx_position, **kwargs)
 
     def create_summary_slide(self, layout=None):
-        result = self.pptx_creator.add_slide("Summary", layout)
+        result = self.pptx_creator.add_slide(f"Summary - {self.path}", layout)
+
+        plotter = PI88Plotter(self.measurements)
+        fig = plotter.get_load_displacement_plot()
+        self.add_matplotlib_figure(fig, result, PPTXPosition(0.02, 0.15))
         return result
 
 

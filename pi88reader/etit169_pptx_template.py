@@ -3,7 +3,7 @@ from datetime import datetime
 from pptx_tools.templates import TemplateExample
 
 
-# ETIT_16-9.pptx is not part of the repository due to legal restrictions!
+# ETIT_16-9.prs is not part of the repository due to legal restrictions!
 class TemplateETIT169(TemplateExample):
     """
     Class handling ETIT 16:9 template.

@@ -51,10 +51,10 @@ class PI88CreepReporterPPTX(PI88ToPPTX):  # todo: switch plotting to pi88_plotte
         # # dlog_figure.savefig(path + "dlog_stress_strain.png")
         # # load_disp_figure.savefig(path + "load_disp.png")
         #
-        # # pptx = pptx_creator.PPTXCreator(template=pptx_templates.TemplateETIT169(), title="Creep via Ni on AuSn")
-        # pptx = pptx_creator.PPTXCreator(template=pptx_templates.TemplateExample(), title="Creep Example")
-        # pptx.add_matplotlib_figure(dlog_figure, slide_index=0, top_rel=0.22)
-        # pptx.save(path+"NI_on_AuSn.pptx")
+        # # prs = pptx_creator.PPTXCreator(template=pptx_templates.TemplateETIT169(), title="Creep via Ni on AuSn")
+        # prs = pptx_creator.PPTXCreator(template=pptx_templates.TemplateExample(), title="Creep Example")
+        # prs.add_matplotlib_figure(dlog_figure, slide_index=0, top_rel=0.22)
+        # prs.save(path+"NI_on_AuSn.prs")
 
     def create_title_slide(self, title: str):
         load_disp_figure, load_disp_axes = create_figure(x_label="displacement [nm]",
@@ -86,7 +86,7 @@ def main():
     reporter = PI88CreepReporterPPTX(path, pptx_template.TemplateExample())
     reporter.create_title_slide("Creep example")
     # figure, axes = create_figure(x_label=r"F/A [$\mathrm{N/m^2}$]", y_label="creep rate [1/s]")
-    # default_position = PPTXPosition(reporter.pptx, 0.2, 0.6)
+    # default_position = PPTXPosition(reporter.prs, 0.2, 0.6)
     # reporter.add_matplotlib_figure(figure, 0, default_position)
     reporter.create_summary_slide()
     reporter.pptx_creator.save()

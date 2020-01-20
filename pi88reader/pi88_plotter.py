@@ -1,7 +1,7 @@
 """
 @author: Nathanael Jöhrmann
 """
-from typing import Union, List, Tuple, Iterable
+from typing import Union, List, Tuple, Iterable, Optional
 from matplotlib.figure import Figure
 from matplotlib.pyplot import Axes
 import matplotlib.pyplot as plt
@@ -53,3 +53,6 @@ class PI88Plotter:
             self.add_curve_to_axes(x, y, axes)
         figure.tight_layout()
         return figure
+
+    def set(self, dpi: Optional[int] = None):#, figsize: Optional[tuple[float, float]] = None):
+        pass

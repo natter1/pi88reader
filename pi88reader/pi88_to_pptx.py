@@ -28,7 +28,7 @@ class PI88ToPPTX:
             self.load_tdm_files(measurements_path)
         self.plotter = PI88Plotter(self.measurements)
         self.pptx_creator = PPTXCreator(template=template)
-        self.pptx = self.pptx_creator.prs
+        self.prs = self.pptx_creator.prs
         self.position = self.pptx_creator.default_position
 
         # fig_width = 8
@@ -61,7 +61,7 @@ class PI88ToPPTX:
         :param slide_index:
         :param pptx_position:
         :param kwargs: e.g. width and height
-        :return: pptx.shapes.picture.Picture
+        :return: prs.shapes.picture.Picture
         """
         return self.pptx_creator.add_matplotlib_figure(fig, slide, pptx_position, **kwargs)
 
@@ -74,8 +74,8 @@ class PI88ToPPTX:
         return result
 
 
-    def save(self, filename="delme.pptx"):
-        self.pptx.save(filename)
+    def save(self, filename="delme.prs"):
+        self.prs.save(filename)
 
     # def set_first_slide(self):
     #     layout = self.prs.slide_layouts[0]
@@ -91,7 +91,7 @@ class PI88ToPPTX:
     #     kwargs["top"] = 0
     #     :param fig:
     #     :param slide:
-    #     :return: pptx.shapes.picture.Picture
+    #     :return: prs.shapes.picture.Picture
     #     """
     #     #left = top = Inches(1)
     #     if not "left" in kwargs:

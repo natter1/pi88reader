@@ -4,10 +4,11 @@ from pi88reader.pi88_plotter import PI88Plotter
 from pptx_tools.creator import PPTXPosition, PPTXCreator
 from pptx.util import Inches
 
+
 def test_pptx_creator():
 
 
-    # pptx = PPTXCreator()  # create pptx without using a template file
+    # prs = PPTXCreator()  # create prs without using a template file
     pptx = PPTXCreator(TemplateExample())
     title_slide = pptx.create_title_slide(title="PPTXCreator Demo")
     slide2 = pptx.add_slide(title="Normal slide")

@@ -1,3 +1,6 @@
+import os
+import tempfile
+
 import pytest
 import matplotlib.pyplot as plt
 from pptx_tools.templates import TemplateExample
@@ -31,9 +34,7 @@ class TestPI88ToPPTX:
 
     def test__init__args_path(self):
         measurements_path = '../resources/'
-        template = TemplateExample()
-        pi88_to_pptx = PI88ToPPTX(measurements_path=measurements_path, template=template)
-        assert pi88_to_pptx.prs is template.prs
+        pi88_to_pptx = PI88ToPPTX(measurements_path=measurements_path)
         assert len(pi88_to_pptx.measurements) > 0
 
     def test__init__args_template(self):
@@ -41,9 +42,12 @@ class TestPI88ToPPTX:
         pi88_to_pptx = PI88ToPPTX(template=template)
         assert pi88_to_pptx.prs is template.prs
 
-
     def test__init__args_path_template(self):
-        assert False
+        measurements_path = '../resources/'
+        template = TemplateExample()
+        pi88_to_pptx = PI88ToPPTX(measurements_path=measurements_path, template=template)
+        assert pi88_to_pptx.prs is template.prs
+        assert len(pi88_to_pptx.measurements) > 0
 
     def test_load_tdm_files(self, pi88_to_pptx):
         measurements_path = '../resources/'
@@ -79,4 +83,9 @@ class TestPI88ToPPTX:
         assert n_after == n_before + 1
 
     def test_save(self, pi88_to_pptx):
-        assert False
+        temp_dir = tempfile.gettempdir()
+        temp_filepath = os.path.join(temp_dir, os.urandom(32).hex() + ".pptx")
+        assert not os.path.isfile(temp_filepath)
+        pi88_to_pptx.save(temp_filepath)
+        assert os.path.isfile(temp_filepath)
+        os.remove(temp_filepath)

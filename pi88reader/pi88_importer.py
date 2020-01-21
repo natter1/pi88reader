@@ -230,7 +230,7 @@ class PI88Measurement:
         # -------------------------------------------------
 
         # todo: how to make it work with 'with' statement
-        data = tdm.TdmData(filename)
+        data = tdm.TDMData(filename)
 
         self.segments = PI88Segments(data)
         self.settings = PI88Settings(data)

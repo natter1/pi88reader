@@ -16,7 +16,7 @@ from pptx_tools.creator import PPTXCreator, PPTXPosition
 
 # todo: - create title slide (contact data, creation date ...)
 def main():
-    TEMPLATE_FILENAME = '..\\resources\pptx_template\\example-template.pptx'
+    TEMPLATE_FILENAME = '..\\resources\\pptx_template\\example-template.pptx'
     analyze_pptx(TEMPLATE_FILENAME)
 
 

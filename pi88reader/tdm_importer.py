@@ -11,6 +11,7 @@ import re
 import warnings
 import xml.etree.ElementTree
 from dataclasses import dataclass, field, InitVar
+from typing import Optional, List
 
 import numpy as np
 
@@ -28,14 +29,15 @@ DTYPE_CONVERTERS = {'eInt8Usi': 'i1',
                     'eStringUsi': 'U'}
 
 
-def get_usi_from_string(string):
+def get_usi_from_string(string: str) -> list:
     if string is None or string.strip() == '':
         return []
     else:
         return re.findall("id\(\"(.+?)\"\)", string)
 
+
 @dataclass()
-class TdmChannel:
+class TDMChannel:
     xml_root: xml.etree.ElementTree.Element = field(repr=False)
     id: str
     name: str = None
@@ -48,21 +50,21 @@ class TdmChannel:
     def __post_init__(self):
         self.read()
 
-    def read(self):
+    def read(self) -> None:
         element = self.xml_root.find(f'.//tdm_channel[@id=\'{self.id}\']')
-        self.name = element.find("name").text
-        self.description = element.find("description").text
-        self.unit = element.find("unit_string").text
-        self.data_type = element.find("datatype").text
-        self.local_columns_usi = get_usi_from_string(element.findtext('local_columns'))[0]
-        self.inc = self._get_inc()
+        self.name: str = element.find("name").text
+        self.description: str = element.find("description").text
+        self.unit: str = element.find("unit_string").text
+        self.data_type: str = element.find("datatype").text
+        self.local_columns_usi: str = get_usi_from_string(element.findtext('local_columns'))[0]
+        self.inc: str = self._get_inc()
 
-    def _get_data_usi(self, root):
+    def _get_data_usi(self, root: xml.etree.ElementTree.Element) -> str:
         local_column = root.find(
             f".//localcolumn[@id='{self.local_columns_usi}']")
         return get_usi_from_string(local_column.findtext('values'))[0]
 
-    def _get_inc(self):
+    def _get_inc(self) -> str:
         data_type = self.data_type.split('_')[1].lower() + '_sequence'
         data_usi = self._get_data_usi(self.xml_root)
         return self.xml_root.find(
@@ -79,7 +81,7 @@ class TdmChannel:
 
 
 @dataclass()
-class TdmChannelGroup:
+class TDMChannelGroup:
     id: str = field(default_factory=str, init=False)
     name: str = field(default_factory=str, init=False)
     description: str = field(default_factory=str, init=False)
@@ -88,22 +90,22 @@ class TdmChannelGroup:
     root: InitVar[any]
     _id: InitVar[any]
 
-    def __post_init__(self, root, _id):
+    def __post_init__(self, root: xml.etree.ElementTree.Element, _id: str):
         self.read(root, _id)
         self.read_channels(root)
 
-    def read(self, root, _id):
+    def read(self, root: xml.etree.ElementTree.Element, _id: str):
         element = root.find(f'.//tdm_channelgroup[@id=\'{_id}\']')
         self.id = element.get('id')
         self.name = element.find("name").text
         self.description = element.find("description").text
         self.channel_ids = get_usi_from_string(element.findtext('channels'))
 
-    def read_channels(self, root):
+    def read_channels(self, root: xml.etree.ElementTree.Element):
         for channel_id in self.channel_ids:
-            self.channels.append(TdmChannel(root, channel_id))
+            self.channels.append(TDMChannel(root, channel_id))
 
-    def get_channel(self, channel_name):
+    def get_channel(self, channel_name: str) -> Optional[TDMChannel]:
         result = [x for x in self.channels if x.name == channel_name]
         if len(result) == 0:
             return None
@@ -117,13 +119,12 @@ class TdmChannelGroup:
                f"\tChannel ids: {self.channel_ids.__str__()}"
 
 
-class TdmData:
+class TDMData:
     """Class for importing data from National Instruments TDM/TDX files."""
 
-    def __init__(self, tdm_file):
+    def __init__(self, tdm_file: str):
         """
-        :param tdm_file: str
-            The filename including full path to the .TDM xml-file.
+        :param tdm_file: The filename including full path to the .TDM xml-file.
         """
         self._folder, self._tdm_filename = os.path.split(tdm_file)
         self.root = xml.etree.ElementTree.parse(tdm_file).getroot()
@@ -137,17 +138,16 @@ class TdmData:
     def read_channel_groups(self):
         ids = get_usi_from_string(self.root.findtext('.//tdm_root//channelgroups'))
         for _id in ids:
-            self.channel_groups.append(TdmChannelGroup(self.root, _id))
+            self.channel_groups.append(TDMChannelGroup(self.root, _id))
 
-    def get_channel_group_names(self):
+    def get_channel_group_names(self) -> List[str]:
         """
         Returns a list with all channel_group names.
-        :return: list of str
         """
         return [x.name for x in self.channel_groups
                 if x.name is not None]
 
-    def get_channel_names(self, channel_group_name):
+    def get_channel_names(self, channel_group_name: str) -> List[str]:
         """
         Returns a list with all channel names in channel_group.
         :param channel_group_name: str
@@ -157,33 +157,29 @@ class TdmData:
         return [channel.name for channel in channels
                 if channel.name is not None]
 
-    def get_channel_dict(self, channel_group_name):
-        """Returns a dict with {channel: data} entries of a channel_group.
-
-        :param channel_group_name: str
-        :return: dict
-        """
-        channel_dict = {}
+    def get_channel_dict(self, channel_group_name: str) -> dict:
+        """Returns a dict with {channel: data} entries of a channel_group."""
+        result = {}
         name_doublets = set()
 
         for channel_name in self.get_channel_names(channel_group_name):
-            if channel_name in channel_dict:
+            if channel_name in result:
                 name_doublets.add(channel_name)
             inc = self.get_channel(channel_group_name, channel_name).inc
             data = self._get_data(inc)
-            channel_dict[channel_name] = np.array(data)
+            result[channel_name] = np.array(data)
 
         if len(name_doublets) > 0:
             warnings.warn(f"Duplicate channel name(s): {name_doublets}")
-        return channel_dict
+        return result
 
-    def get_channel_group(self, group_name):
+    def get_channel_group(self, group_name: str) -> Optional[TDMChannelGroup]:
         result = [x for x in self.channel_groups if x.name == group_name]
         if len(result) == 0:
             return None
         return result[0]
 
-    def get_channel(self, channel_group_name, channel_name):
+    def get_channel(self, channel_group_name: str, channel_name: str) -> Optional[TDMChannel]:
         channel_group = self.get_channel_group(channel_group_name)
         if channel_group:
             return channel_group.get_channel(channel_name)
@@ -205,10 +201,9 @@ class TdmData:
     def _get_dtype_from_tdm_type(self, value_type):
         return np.dtype(self.get_endian_format() + DTYPE_CONVERTERS[value_type])
 
-    def _get_data(self, inc):
+    def _get_data(self, inc: int):
         """Gets data binary tdx-file belonging to the given inc.
 
-        :param inc: int
         :return: numpy data or None
             Returns None, if inc is None, else returns numpy data.
         """

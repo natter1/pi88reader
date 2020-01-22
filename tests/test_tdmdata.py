@@ -1,6 +1,8 @@
 import pytest
+import numpy as np
 
-from pi88reader.tdm_importer import TDMData, TDMChannelGroup
+from pi88reader import tdm_importer
+from pi88reader.tdm_importer import TDMData, TDMChannelGroup, TDMChannel
 
 
 @pytest.fixture(scope='class')
@@ -50,13 +52,18 @@ class TestTdmData:
         assert len(tdm_data.get_channel_group("Segments").channels) == 8
 
     def test_get_channel(self, tdm_data):
-        assert False
+        assert tdm_data.get_channel("", "whatever") is None  # no Channel group name given
+        channel_name = "Test Time"
+        channel = tdm_data.get_channel("Indentation All Data Points", channel_name)  # no Channel group name given
+        assert type(channel) is TDMChannel
+        assert channel.name == channel_name
 
     def test_get_endian_format(self, tdm_data):
-        assert False
+        assert tdm_data.get_endian_format() in ["<", ">"]
 
     def test__get_dtype_from_tdm_type(self, tdm_data):
-        assert False
+        for key, value in tdm_importer.DTYPE_CONVERTERS.items():
+            assert tdm_data._get_dtype_from_tdm_type(key) is np.dtype(value)
 
     def test__get_data(self, tdm_data):
         assert False

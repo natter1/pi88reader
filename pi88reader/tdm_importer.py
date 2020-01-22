@@ -1,6 +1,6 @@
 """This module allows National Instruments TDM/TDX files to be accessed like
 NumPy structured arrays. Triboscan can save PI88 measurements in this file format.
-
+@author: Nathanael Jöhrmann
 ==============================================================================
 Inspired by the module tdm-loader (https://pypi.org/project/tdm-loader/):
 from Josh Ayers and Florian Dobener
@@ -33,10 +33,10 @@ def get_usi_from_string(string: str) -> list:
     if string is None or string.strip() == '':
         return []
     else:
-        return re.findall("id\(\"(.+?)\"\)", string)
+        return re.findall(r"id\(\"(.+?)\"\)", string)
 
 
-@dataclass()
+@dataclass()  # automatically generates __init__, __repr__, __eq, __order__, __hash__
 class TDMChannel:
     xml_root: xml.etree.ElementTree.Element = field(repr=False)
     id: str
@@ -87,7 +87,7 @@ class TDMChannelGroup:
     description: str = field(default_factory=str, init=False)
     channel_ids: list = field(default_factory=list, init=False)
     channels: list = field(default_factory=list, init=False)
-    root: InitVar[any]
+    root: InitVar[any]  # InitVar -> this is passed as parameter to __post__init__()
     _id: InitVar[any]
 
     def __post_init__(self, root: xml.etree.ElementTree.Element, _id: str):
@@ -201,7 +201,7 @@ class TDMData:
     def _get_dtype_from_tdm_type(self, value_type):
         return np.dtype(self.get_endian_format() + DTYPE_CONVERTERS[value_type])
 
-    def _get_data(self, inc: int):
+    def _get_data(self, inc: str):
         """Gets data binary tdx-file belonging to the given inc.
 
         :return: numpy data or None

@@ -9,7 +9,7 @@ from typing import Union, Iterable
 import matplotlib.pyplot as plt
 
 from pptx_tools.templates import analyze_pptx
-from pi88reader.pi88_importer import PI88Measurement
+from pi88reader.pi88_importer import PI88Measurement, load_tdm_files
 from pi88reader.pi88_plotter import PI88Plotter
 from pptx_tools.creator import PPTXCreator, PPTXPosition
 
@@ -40,10 +40,7 @@ class PI88ToPPTX:
         # picture.top = Inches(3)
 
     def load_tdm_files(self, path: str, sort_key=os.path.getctime):  # sorted by creation time (using windows)
-        files = glob.glob(os.path.join(path, '*.tdm'))
-        files.sort(key=sort_key)
-        for file in files:
-            self.measurements.append(PI88Measurement(file))
+        self.measurements.extend(load_tdm_files(path, sort_key))
 
     def add_measurements(self, measurements: Union[PI88Measurement, Iterable[PI88Measurement]]) -> None:
         """
@@ -73,6 +70,11 @@ class PI88ToPPTX:
         self.add_matplotlib_figure(fig, result, PPTXPosition(0.02, 0.15))
         return result
 
+    def create_title_slide(self, title=None, layout=None):
+        if title is None:
+            title = f"Summary - {self.path}"
+        result = self.pptx_creator.create_title_slide(title, layout)
+        return result
 
     def save(self, filename="delme.prs"):
         self.prs.save(filename)

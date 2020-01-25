@@ -1,6 +1,8 @@
 """
 @author: Nathanael Jöhrmann
 """
+import glob
+import os
 from enum import Enum
 
 import numpy as np
@@ -32,6 +34,14 @@ def main():
     for name_tuple in PI88Measurement.dynamic_name_tuples:
         print(name_tuple[0], getattr(measurement, name_tuple[0]))
 
+
+def load_tdm_files(path: str, sort_key=os.path.getctime):  # sorted by creation time (using windows)
+    result = []
+    files = glob.glob(os.path.join(path, '*.tdm'))
+    files.sort(key=sort_key)
+    for file in files:
+        result.append(PI88Measurement(file))
+    return result
 
 class PI88AreaFunction:
     data_names = [

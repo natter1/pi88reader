@@ -2,7 +2,6 @@
 @author: Nathanael Jöhrmann
 """
 import os
-from enum import Enum, auto
 from typing import Union, List, Tuple, Iterable, Optional
 from matplotlib.figure import Figure
 from matplotlib.pyplot import Axes
@@ -10,13 +9,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from pi88reader.pi88_importer import PI88Measurement, load_tdm_files
-from pi88reader.plotter_styles import PlotterStyle
-
-
-class Data(Enum):
-    TIME = auto()
-    LOAD = auto()
-    DISPLACEMENT = auto()
+import pi88reader.pi88_importer as pi88_importer
+from pi88reader.plotter_styles import PlotterStyle, GraphStyler
 
 
 class PI88Plotter:
@@ -29,9 +23,10 @@ class PI88Plotter:
         self.figure_size = (5.6, 5.0)
         self.dpi = 150
 
-        self.marker_style = dict(marker='o', markeredgewidth=0, markersize=2)
-        self.line_style = dict(linestyle='')
-        self.colors = plt.cm.viridis(np.linspace(0, 1, len(self.measurements)))
+        self.graph_styler = GraphStyler(len(self.measurements))
+        # self.marker_style = dict(marker='o', markeredgewidth=0, markersize=2)
+        # self.line_style = dict(linestyle='')
+        # self.colors = plt.cm.viridis(np.linspace(0, 1, len(self.measurements)))
 
     def add_measurements(self, measurements: Union[PI88Measurement, Iterable[PI88Measurement]]) -> None:
         """
@@ -54,28 +49,25 @@ class PI88Plotter:
         return figure, axes
 
     def add_curve_to_axes(self, x, y, axes):  # todo: kwargs? legend entry etc.?
-        axes.plot(x, y, **self.marker_style, **self.line_style)
+        axes.plot(x, y, **self.graph_styler.dict)  # **self.marker_style, **self.line_style)
+        self.graph_styler.next_style()
 
-    def get_load_displacement_plot(self):
-        return self.get_plot(Data.DISPLACEMENT, Data.LOAD)
+    def get_load_displacement_plot(self) -> Figure:
+        return self.get_plot(pi88_importer.Data.DISPLACEMENT, pi88_importer.Data.LOAD)
 
-    def get_load_time_plot(self):
-        return self.get_plot(Data.TIME, Data.LOAD)
+    def get_load_time_plot(self) -> Figure:
+        return self.get_plot(pi88_importer.Data.TIME, pi88_importer.Data.LOAD)
 
     def get_displacement_time_plot(self):
         pass
 
-    def get_plot(self, data_x: Data, data_y: Data):
-        data_type = { # name, unit, PI88Measurement attribute name
-            Data.TIME: ("time", "s", "time"),
-            Data.LOAD: ("load", "µN", "load"),
-            Data.DISPLACEMENT: ("displacement", "nm", "depth")
-        }
+    def get_plot(self, data_x: pi88_importer.Data, data_y: pi88_importer.Data) -> Figure:
+        data_type = pi88_importer.DATA_TYPE_DICT
         x_name, x_unit , x_attr_name = data_type[data_x]
         y_name, y_unit , y_attr_name = data_type[data_y]
 
         figure, axes = self.create_figure_with_axes(x_label=f"{x_name} [{x_unit}]", y_label=f"{y_name} [{y_unit}]")
-        axes.set_prop_cycle('color', self.colors)
+        # axes.set_prop_cycle('color', self.colors)
         for measurement in self.measurements:
             x = getattr(measurement, x_attr_name)
             y = getattr(measurement, y_attr_name)
@@ -86,7 +78,7 @@ class PI88Plotter:
     def set(self,
             plotter_style: Optional[PlotterStyle] = None,
             dpi: Optional[int] = None,
-            figure_size: Optional[tuple[float, float]] = None
+            figure_size: Optional[Tuple[float, float]] = None
             ):
         if plotter_style:
             self.read_plotter_style(plotter_style)
@@ -98,4 +90,6 @@ class PI88Plotter:
     def read_plotter_style(self, style: PlotterStyle):
         if style.dpi:
             self.dpi = style.dpi
+        if style.figure_size:
+            self.figure_size = style.figure_size
         # ...

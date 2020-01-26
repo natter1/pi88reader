@@ -10,7 +10,7 @@ import numpy as np
 from pptx_tools.templates import TemplateExample
 from pi88reader import my_styles
 from pi88reader.pi88_importer import SegmentType
-from pi88reader.pi88_matplotlib_tools import PlotStyle
+from pi88reader.plotter_styles import GraphStyler
 from pi88reader.pi88_to_pptx import PI88ToPPTX
 from pptx_tools.creator import PPTXPosition
 
@@ -19,7 +19,7 @@ class PI88CreepReporterPPTX(PI88ToPPTX):  # todo: switch plotting to pi88_plotte
     def __init__(self, measurements_path=None, template=None):
         super().__init__(measurements_path, template)
 
-        self.style = PlotStyle(len(self.measurements))
+        self.style = GraphStyler(len(self.measurements))
         print(self.style.cmap)
         self.style.cmap = my_styles.CMAP_BERNHARD
         self.style.marker_map = my_styles.MARKER_BERNHARD
@@ -60,13 +60,13 @@ class PI88CreepReporterPPTX(PI88ToPPTX):  # todo: switch plotting to pi88_plotte
         load_disp_figure, load_disp_axes = create_figure(x_label="displacement [nm]",
                                                          y_label=r"load [$\mathrm{\mu N}$]")
         for measurement in self.measurements:
-            load_disp_axes.plot(measurement.depth, measurement.load, **self.style.marker, **self.style.line,
-                            label=measurement.filename)
+            load_disp_axes.plot(measurement.depth, measurement.load, **self.style.marker, **self.style.linestyle,
+                                label=measurement.filename)
         load_disp_axes.legend()
         load_disp_figure.tight_layout()
 
         result = self.pptx_creator.create_title_slide(title)
-        self.add_matplotlib_figure(load_disp_figure, slide_index=result, pptx_position=PPTXPosition(0.05, 0.25))
+        self.add_matplotlib_figure(load_disp_figure, slide=result, pptx_position=PPTXPosition(0.05, 0.25))
         return result
 
     def create_summary_slide(self, layout=None):
@@ -83,7 +83,7 @@ def main():
     # path = "..\\resources\\AuSn_Creep\\DMA\\"
     path = "..\\resources\\creep_example\\"
 
-    reporter = PI88CreepReporterPPTX(path, pptx_template.TemplateExample())
+    reporter = PI88CreepReporterPPTX(path, TemplateExample())
     reporter.create_title_slide("Creep example")
     # figure, axes = create_figure(x_label=r"F/A [$\mathrm{N/m^2}$]", y_label="creep rate [1/s]")
     # default_position = PPTXPosition(reporter.prs, 0.2, 0.6)
@@ -153,7 +153,7 @@ def get_avg_strain_rate_and_sigma(measurement):
 
 
 def add_dlog_plot(axes, x, y, style, label="", fit_deg=0):
-    axes.loglog(x, y, **style.marker, **style.line, label=label,
+    axes.loglog(x, y, **style.marker, **style.linestyle, label=label,
                 color=style.color, fillstyle="none")
 
     if fit_deg:

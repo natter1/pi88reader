@@ -3,12 +3,24 @@
 """
 import glob
 import os
-from enum import Enum
+from enum import Enum, auto
 
 import numpy as np
 
 import pi88reader.tdm_importer as tdm
 
+
+class Data(Enum):
+    TIME = auto()
+    LOAD = auto()
+    DISPLACEMENT = auto()
+
+
+DATA_TYPE_DICT = {  # name, unit, PI88Measurement attribute name
+    Data.TIME: ("time", "s", "time"),
+    Data.LOAD: ("load", "µN", "load"),
+    Data.DISPLACEMENT: ("displacement", "nm", "depth")
+}
 
 def main():
     """

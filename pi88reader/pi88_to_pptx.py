@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Union, Iterable
 
 import matplotlib.pyplot as plt
+from pptx.util import Inches
 
 from pptx_tools.templates import analyze_pptx
 from pi88reader.pi88_importer import PI88Measurement, load_tdm_files
@@ -15,6 +16,10 @@ from pptx_tools.creator import PPTXCreator, PPTXPosition
 
 
 # todo: - create title slide (contact data, creation date ...)
+from pi88reader.utils_pi88measurements import get_date_intervall_string, get_aborted_measurements, \
+    get_transducer_serials_string, get_triboscan_versions_string
+
+
 def main():
     TEMPLATE_FILENAME = '..\\resources\\pptx_template\\example-template.pptx'
     analyze_pptx(TEMPLATE_FILENAME)
@@ -72,8 +77,20 @@ class PI88ToPPTX:
 
     def create_title_slide(self, title=None, layout=None):
         if title is None:
-            title = f"Summary - {self.path}"
-        result = self.pptx_creator.create_title_slide(title, layout)
+            title = f"NI results {self.path}"
+        result = self.pptx_creator.add_title_slide(title, layout)
+
+        table_data = [[""]]  # no table headers
+        table_data.append(["Number of measurements:", len(self.measurements)])
+        table_data.append(["Measurements aborted:", len(get_aborted_measurements(self.measurements))])
+        table_data.append(["Measurement dates: ", get_date_intervall_string(self.measurements)])
+        table_data.append(["Transducer serials: ", get_transducer_serials_string(self.measurements)])
+        table_data.append(["Triboscan versions: ", get_triboscan_versions_string(self.measurements)])
+
+
+        table_shape = self.pptx_creator.add_table(result, table_data, PPTXPosition(0.05, 0.3))
+        table_shape.table.columns[0].width = Inches(4.0)
+        table_shape.table.columns[1].width = Inches(4.0)
         return result
 
     def save(self, filename="delme.prs"):

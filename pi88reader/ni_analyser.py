@@ -47,7 +47,7 @@ def get_subset_by_y(x_data: Iterable, y_data: Iterable, upper: float, lower: flo
     return result
 
 
-def fit_unloading(displacement: Iterable, load: Iterable, upper=90, lower=10) -> dict:
+def fit_unloading(displacement: Iterable, load: Iterable, upper=95, lower=20) -> dict:
     """
     Power law fit for unloading curve. Returns a dictionary with fit parameters and calculated S, Er and H
     """
@@ -80,7 +80,11 @@ def fit_unloading(displacement: Iterable, load: Iterable, upper=90, lower=10) ->
 from bisect import bisect
 
 
-def get_avg_strain_rate_and_sigma(time, disp, load):
+def get_avg_strain_rate_and_sigma(time, disp, load, area_function):  # todo: area_function; -> PI88Measurement.get_dict_for_creep_analyse
+    """
+    Uses data from a hold segment (time, displacement, load) and an area-function,
+     to calculate avg. strain rate and sigma
+    """
     # QS
     # header, time, disp, load = measurement.get_segment_curve(SegmentType.HOLD)
     # for DMA:
@@ -122,7 +126,7 @@ def get_avg_strain_rate_and_sigma(time, disp, load):
         delta_time.append(avg_time[-1] - avg_time[-2])
         delta_disp.append((avg_disp[-1] - avg_disp[-2]) * 1e-9)
 
-        averaged_area = measurement.area_function.get_area(avg_disp[-1]) * 1e-18
+        averaged_area = area_function(avg_disp[-1]) * 1e-18
         area_avg.append(averaged_area)
         averaged_load_over_area = avg_load[-1] * 1e-6 / averaged_area
         load_over_area_avg.append(averaged_load_over_area)

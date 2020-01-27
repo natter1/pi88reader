@@ -255,7 +255,14 @@ class TDMData:
                 return {element.get("name"): float(element.text)}
             elif element.tag == 'long_attribute':
                 return {element.get("name"): int(element.text)}
-            # todo: 'time_attribute'
+            elif element.tag == 'time_attribute':
+                value = element.text
+                try:
+                    from datetime import datetime
+                    value = datetime.strptime(value[:19], '%Y-%m-%dT%H:%M:%S')
+                except ValueError:
+                    print(ValueError, f"\nCouldn't transform time string to datetime ({element.get('name')} - {value})")
+                return {element.get("name"): value}
             else:
                 return {element.get("name"): element.text}
 

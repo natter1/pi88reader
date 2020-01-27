@@ -10,18 +10,6 @@ import numpy as np
 import pi88reader.tdm_importer as tdm
 
 
-class Data(Enum):
-    TIME = auto()
-    LOAD = auto()
-    DISPLACEMENT = auto()
-
-
-DATA_TYPE_DICT = {  # name, unit, PI88Measurement attribute name
-    Data.TIME: ("time", "s", "time"),
-    Data.LOAD: ("load", "µN", "load"),
-    Data.DISPLACEMENT: ("displacement", "nm", "depth")
-}
-
 def main():
     """
     Called at end of file, if __name__ == "__main__"
@@ -47,6 +35,19 @@ def main():
         print(name_tuple[0], getattr(measurement, name_tuple[0]))
 
 
+class Data(Enum):
+    TIME = auto()
+    LOAD = auto()
+    DISPLACEMENT = auto()
+
+
+DATA_TYPE_DICT = {  # name, unit, PI88Measurement attribute name
+    Data.TIME: ("time", "s", "time"),
+    Data.LOAD: ("load", "µN", "load"),
+    Data.DISPLACEMENT: ("displacement", "nm", "depth")
+}
+
+
 def load_tdm_files(path: str, sort_key=os.path.getctime):  # sorted by creation time (using windows)
     result = []
     files = glob.glob(os.path.join(path, '*.tdm'))
@@ -67,10 +68,15 @@ class PI88AreaFunction:
         ("c5", "Current_Area_Function_C5")
     ]
 
-    def __init__(self, settings_dict={}):
+    def __init__(self, settings_dict):
         # only needed, to make pycharm code completion work:
         self.b = None
         self.c0 = None
+        self.c1 = None
+        self.c2 = None
+        self.c3 = None
+        self.c4 = None
+        self.c5 = None
         # --------------------------------------------------
         self.read(settings_dict)
 

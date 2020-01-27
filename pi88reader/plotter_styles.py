@@ -27,6 +27,7 @@ def get_plotter_style_bernhard_4() -> PlotterStyle:
     graph_styler = GraphStyler()
     graph_styler.linestyle_map = [""]
     graph_styler.marker_map = ["o", "s", "<", ">"]  # ["x", "+", "1"]
+    graph_styler.marker_size = 3
     graph_styler.cmap = [[0, 0, 0], # black
                          [1, 0, 0],  # red
                          [0, 0, 1],  # blue

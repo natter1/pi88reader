@@ -24,9 +24,6 @@ class PI88Plotter:
         self.dpi = 150
 
         self.graph_styler = GraphStyler(len(self.measurements))
-        # self.marker_style = dict(marker='o', markeredgewidth=0, markersize=2)
-        # self.line_style = dict(linestyle='')
-        # self.colors = plt.cm.viridis(np.linspace(0, 1, len(self.measurements)))
 
     def add_measurements(self, measurements: Union[PI88Measurement, Iterable[PI88Measurement]]) -> None:
         """
@@ -59,7 +56,7 @@ class PI88Plotter:
         return self.get_plot(pi88_importer.Data.TIME, pi88_importer.Data.LOAD)
 
     def get_displacement_time_plot(self):
-        pass
+        return self.get_plot(pi88_importer.Data.TIME, pi88_importer.Data.DISPLACEMENT)
 
     def get_plot(self, data_x: pi88_importer.Data, data_y: pi88_importer.Data) -> Figure:
         data_type = pi88_importer.DATA_TYPE_DICT
@@ -92,4 +89,6 @@ class PI88Plotter:
             self.dpi = style.dpi
         if style.figure_size:
             self.figure_size = style.figure_size
+        if style.graph_styler:
+            self.graph_styler = style.graph_styler
         # ...

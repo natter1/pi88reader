@@ -8,7 +8,6 @@ import matplotlib.ticker as ticker
 import numpy as np
 
 from pptx_tools.templates import TemplateExample
-from pi88reader import my_styles
 from pi88reader.pi88_importer import SegmentType
 from pi88reader.plotter_styles import GraphStyler
 from pi88reader.pi88_to_pptx import PI88ToPPTX

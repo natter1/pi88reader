@@ -180,7 +180,7 @@ class PI88Segments:
 
 class PI88Settings:
     # self.settings dictonary names for important settings
-    important_settings_names = [
+    important_settings_names = (
         "Current_Machine_Compliance__nm___mN__",
         "Current_Tip_Modulus__MPa__",
         "Current_Tip_Poissons_Ratio",
@@ -189,7 +189,21 @@ class PI88Settings:
         "Acquisition_Test_Aborted",
         "Current_Drift_Correction",
         "Current_Drift_Rate__nm___s__"
-    ]
+    )
+    # self.settings dictionary names for fit parameters
+    quasi_analysis_fit_parameter_names = {
+        "A": "Quasi_Analysis_Fitted_A",
+        "hf": "Quasi_Analysis_Fitted_hf",
+        "m": "Quasi_Analysis_Fitted_m",
+        "lower [%]": "Quasi_Analysis_Lower_Fitted__percent__",
+        "upper [%]": "Quasi_Analysis_Upper_Fitted__percent__",
+        "segment": "Quasi_Analysis_Unload_Segment"
+    }
+    # self.settings dictionary names for fit results
+    quasi_analysis_fit_results_names = {
+        "Er [GPa]": "Quasi_Analysis_Reduced_Modulus__GPa__",
+        "H [GPa]": "Quasi_Analysis_Hardness__GPa__"
+    }
 
     def __init__(self, data):
         self.dict = {}

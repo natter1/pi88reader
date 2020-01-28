@@ -1,9 +1,11 @@
 """
-Collection of functions to handle list of measurements
+Functions to handle a collection of measurements.
 @author: Nathanael Jöhrmmann
 """
-from typing import Iterable
+from typing import Iterable, Sized, Collection
 
+
+# Quasi_Analysis_Unload_Segment
 
 # 'Acquisition_Transducer_Serial'
 # 'Acquisition_TriboScan_Version'
@@ -40,6 +42,30 @@ def get_triboscan_versions_string(measurements: Iterable) -> str:
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+def get_feedback_modes(measurements: Iterable) -> set:
+    # 1 ... ? displacement controlled (careful! first segments with in contact always DC)
+    # 5 ... load controlled
+    result = set()
+    for measurement in measurements:
+        result.add(measurement.segments.fb_mode[-1])
+    return result
+
+
+def get_feedback_modes_string(measurements: Iterable) -> str:
+    result = ""
+    modes = get_feedback_modes(measurements)
+    if 1 in modes:
+        result += "displacement controlled"
+    if 5 in modes:
+        if result:
+            result += ", "
+        result += "load controlled"
+    return result
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 def get_measurement_dates(measurements: Iterable) -> set:
     result = set()
     for m in measurements:
@@ -64,7 +90,13 @@ def get_aborted_measurements(measurements: Iterable) -> list:
             result.append(m)
     return result
 
-def get_measurement_types(measurements: Iterable):
-    pass
 
+def get_measurements_meta_data(measurements: Collection) -> list:
+    """Get table like meta data for a collection of measurements."""
+    return [["Number of measurements:", len(measurements)],
+            ["Feedback modes: ", get_feedback_modes_string(measurements)],
+            ["Measurements aborted:", len(get_aborted_measurements(measurements))],
+            ["Measurement dates: ", get_date_intervall_string(measurements)],
+            ["Transducer serials: ", get_transducer_serials_string(measurements)],
+            ["Triboscan versions: ", get_triboscan_versions_string(measurements)]]
 

@@ -7,17 +7,20 @@ from datetime import datetime
 from typing import Union, Iterable
 
 import matplotlib.pyplot as plt
+from pptx.enum.dml import MSO_THEME_COLOR_INDEX
 from pptx.util import Inches
 
 from pptx_tools.templates import analyze_pptx
 from pi88reader.pi88_importer import PI88Measurement, load_tdm_files
 from pi88reader.pi88_plotter import PI88Plotter
 from pptx_tools.creator import PPTXCreator, PPTXPosition
+import pptx_tools.style_sheets as style_sheets
 
 
 # todo: - create title slide (contact data, creation date ...)
+from pptx_tools.table_style import PPTXTableStyle
 from pi88reader.utils_pi88measurements import get_date_intervall_string, get_aborted_measurements, \
-    get_transducer_serials_string, get_triboscan_versions_string
+    get_transducer_serials_string, get_triboscan_versions_string, get_feedback_modes_string, get_measurements_meta_data
 
 
 def main():
@@ -80,18 +83,16 @@ class PI88ToPPTX:
             title = f"NI results {self.path}"
         result = self.pptx_creator.add_title_slide(title, layout)
 
-        table_data = [[""]]  # no table headers
-        table_data.append(["Number of measurements:", len(self.measurements)])
-        table_data.append(["Measurements aborted:", len(get_aborted_measurements(self.measurements))])
-        table_data.append(["Measurement dates: ", get_date_intervall_string(self.measurements)])
-        table_data.append(["Transducer serials: ", get_transducer_serials_string(self.measurements)])
-        table_data.append(["Triboscan versions: ", get_triboscan_versions_string(self.measurements)])
-
+        table_data = get_measurements_meta_data(self.measurements)
 
         table_shape = self.pptx_creator.add_table(result, table_data, PPTXPosition(0.05, 0.3))
-        table_shape.table.columns[0].width = Inches(4.0)
-        table_shape.table.columns[1].width = Inches(4.0)
+        dummy = table_shape.table
+
+        table_style = style_sheets.table_no_header()  # PPTXTableStyle()
+        table_style.set_width_as_fraction(self.prs, 0.52)
+        table_style.write_shape(table_shape)
         return result
+
 
     def save(self, filename="delme.prs"):
         self.prs.save(filename)

@@ -91,6 +91,16 @@ def get_aborted_measurements(measurements: Iterable) -> list:
     return result
 
 
+def get_measurement_result_data(measurement: "PI88Measurement", poisson_ratio = 0.3, beta = 1.0) -> list:
+    """Get table like result data for a measurement."""
+    return [["H [GPa] (TriboScan)", measurement.settings.dict["Quasi_Analysis_Hardness__GPa__"]],
+            ["Er [GPa] (Triboscan)",  measurement.settings.dict["Quasi_Analysis_Reduced_Modulus__GPa__"]],
+            ["H [GPa]", None],
+            ["Er [GPa]", None],
+            [f"E [GPa] (PN={poisson_ratio}, Beta={beta}", None]
+            ]
+
+
 def get_measurements_meta_data(measurements: Collection) -> list:
     """Get table like meta data for a collection of measurements."""
     return [["Number of measurements:", len(measurements)],

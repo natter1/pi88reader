@@ -4,7 +4,7 @@
 import glob
 import os
 from datetime import datetime
-from typing import Union, Iterable
+from typing import Union, Iterable, Optional, List
 
 import matplotlib.pyplot as plt
 from pptx.enum.dml import MSO_THEME_COLOR_INDEX
@@ -20,7 +20,8 @@ import pptx_tools.style_sheets as style_sheets
 # todo: - create title slide (contact data, creation date ...)
 from pptx_tools.table_style import PPTXTableStyle
 from pi88reader.utils_pi88measurements import get_date_intervall_string, get_aborted_measurements, \
-    get_transducer_serials_string, get_triboscan_versions_string, get_feedback_modes_string, get_measurements_meta_data
+    get_transducer_serials_string, get_triboscan_versions_string, get_feedback_modes_string, get_measurements_meta_data, \
+    get_measurement_result_data
 
 
 def main():
@@ -38,6 +39,9 @@ class PI88ToPPTX:
         self.pptx_creator = PPTXCreator(template=template)
         self.prs = self.pptx_creator.prs
         self.position = self.pptx_creator.default_position
+
+        self.poisson_ratio = 0.3
+        self.beta = 1.0
 
         # fig_width = 8
         # fig_height = 4.5
@@ -78,21 +82,59 @@ class PI88ToPPTX:
         self.add_matplotlib_figure(fig, result, PPTXPosition(0.02, 0.15))
         return result
 
-    def create_title_slide(self, title=None, layout=None):
+    def create_title_slide(self, title=None, layout=None, default_content=False):
         if title is None:
             title = f"NI results {self.path}"
         result = self.pptx_creator.add_title_slide(title, layout)
+        self.create_measurements_meta_table(result)
 
-        table_data = get_measurements_meta_data(self.measurements)
+        plotter = PI88Plotter(self.measurements)
+        fig = plotter.get_load_displacement_plot()
+        self.add_matplotlib_figure(fig, result, PPTXPosition(0.57, 0.24))
 
-        table_shape = self.pptx_creator.add_table(result, table_data, PPTXPosition(0.05, 0.3))
-        dummy = table_shape.table
-
-        table_style = style_sheets.table_no_header()  # PPTXTableStyle()
-        table_style.set_width_as_fraction(self.prs, 0.52)
-        table_style.write_shape(table_shape)
         return result
 
+    def create_measurement_slide(self, measurement: PI88Measurement, layout = None):
+        title = measurement.filename[:-4].split("/")[-1].split("\\")[-1]
+        result = self.pptx_creator.add_slide(title, layout)
+
+        plotter = PI88Plotter(measurement)
+        fig = plotter.get_load_displacement_plot()
+        self.add_matplotlib_figure(fig, result, PPTXPosition(0.02, 0.15))
+
+        self.create_measurement_result_table(result, measurement)
+
+        return result
+
+    def create_measurement_slides(self, measurements: Optional[List[PI88Measurement]] = None, layout = None) -> list:
+        result = []
+        if measurements is None:
+            measurements = self.measurements
+
+        for measurement in measurements:
+            result.append(self.create_measurement_slide(measurement, layout))
+
+        return result
+
+    def create_measurement_result_table(self, slide, measurement, table_style: PPTXTableStyle = None):
+        table_data = get_measurement_result_data(measurement, self.poisson_ratio, self.beta)
+
+        result = self.pptx_creator.add_table(slide, table_data, PPTXPosition(0.521, 0.26))
+        if table_style is None:
+            table_style = style_sheets.table_no_header()
+            table_style.set_width_as_fraction(self.prs, 0.4)
+        table_style.write_shape(result)
+        return result
+
+    def create_measurements_meta_table(self, slide, table_style: PPTXTableStyle = None):
+        table_data = get_measurements_meta_data(self.measurements)
+
+        result = self.pptx_creator.add_table(slide, table_data, PPTXPosition(0.021, 0.26))
+        if table_style is None:
+            table_style = style_sheets.table_no_header()
+            table_style.set_width_as_fraction(self.prs, 0.52)
+        table_style.write_shape(result)
+        return result
 
     def save(self, filename="delme.prs"):
         self.prs.save(filename)

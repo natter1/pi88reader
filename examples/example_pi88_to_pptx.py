@@ -15,7 +15,9 @@ def run():
 
     pptx = PI88ToPPTX(measurements_path, TemplateExample())
     pptx.create_title_slide()
+    pptx.create_measurement_slides()
     pptx.create_summary_slide()
+    pptx.pptx_creator.add_content_slide()
     pptx.save("example_pi88_to_pptx.pptx")
 
 if __name__ == '__main__':

@@ -8,6 +8,7 @@ from typing import Union, Iterable, Optional, List
 
 import matplotlib.pyplot as plt
 from pptx.enum.dml import MSO_THEME_COLOR_INDEX
+from pptx.shapes.autoshape import Shape
 from pptx.util import Inches
 
 from pptx_tools.templates import analyze_pptx
@@ -19,9 +20,10 @@ import pptx_tools.style_sheets as style_sheets
 
 # todo: - create title slide (contact data, creation date ...)
 from pptx_tools.table_style import PPTXTableStyle
+
+from pi88reader.utils_pi88measurement import get_measurement_result_data, get_measurement_meta_data
 from pi88reader.utils_pi88measurements import get_date_intervall_string, get_aborted_measurements, \
-    get_transducer_serials_string, get_triboscan_versions_string, get_feedback_modes_string, get_measurements_meta_data, \
-    get_measurement_result_data
+    get_transducer_serials_string, get_triboscan_versions_string, get_feedback_modes_string, get_measurements_meta_data
 
 
 def main():
@@ -103,7 +105,7 @@ class PI88ToPPTX:
         self.add_matplotlib_figure(fig, result, PPTXPosition(0.02, 0.15))
 
         self.create_measurement_result_table(result, measurement)
-
+        self.create_measurement_meta_data_table(result, measurement)
         return result
 
     def create_measurement_slides(self, measurements: Optional[List[PI88Measurement]] = None, layout = None) -> list:
@@ -116,13 +118,22 @@ class PI88ToPPTX:
 
         return result
 
-    def create_measurement_result_table(self, slide, measurement, table_style: PPTXTableStyle = None):
-        table_data = get_measurement_result_data(measurement, self.poisson_ratio, self.beta)
-
-        result = self.pptx_creator.add_table(slide, table_data, PPTXPosition(0.521, 0.26))
+    def create_measurement_meta_data_table(self, slide, measurement, table_style: PPTXTableStyle = None) -> Shape:
+        table_data = get_measurement_meta_data(measurement)
+        result = self.pptx_creator.add_table(slide, table_data, PPTXPosition(0.521, 0.16))
         if table_style is None:
             table_style = style_sheets.table_no_header()
-            table_style.set_width_as_fraction(self.prs, 0.4)
+            table_style.set_width_as_fraction(0.4)
+        table_style.write_shape(result)
+        return result
+
+    def create_measurement_result_table(self, slide, measurement, table_style: PPTXTableStyle = None) -> Shape:
+        table_data = get_measurement_result_data(measurement, self.poisson_ratio, self.beta)
+
+        result = self.pptx_creator.add_table(slide, table_data, PPTXPosition(0.521, 0.56))
+        if table_style is None:
+            table_style = style_sheets.table_no_header()
+            table_style.set_width_as_fraction(0.4)
         table_style.write_shape(result)
         return result
 
@@ -132,7 +143,7 @@ class PI88ToPPTX:
         result = self.pptx_creator.add_table(slide, table_data, PPTXPosition(0.021, 0.26))
         if table_style is None:
             table_style = style_sheets.table_no_header()
-            table_style.set_width_as_fraction(self.prs, 0.52)
+            table_style.set_width_as_fraction(0.52)
         table_style.write_shape(result)
         return result
 

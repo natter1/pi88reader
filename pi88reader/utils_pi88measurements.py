@@ -17,6 +17,7 @@ def get_set_by_setting_name(name: str, measurements: Iterable) -> set:
         result.add(m.settings.dict[name])
     return result
 
+
 def get_summary_by_set(my_set: set) -> str:
     result = ""
     for text in my_set:
@@ -89,16 +90,6 @@ def get_aborted_measurements(measurements: Iterable) -> list:
             print(m.settings.dict["Acquisition_Test_Aborted"])
             result.append(m)
     return result
-
-
-def get_measurement_result_data(measurement: "PI88Measurement", poisson_ratio = 0.3, beta = 1.0) -> list:
-    """Get table like result data for a measurement."""
-    return [["H [GPa] (TriboScan)", measurement.settings.dict["Quasi_Analysis_Hardness__GPa__"]],
-            ["Er [GPa] (Triboscan)",  measurement.settings.dict["Quasi_Analysis_Reduced_Modulus__GPa__"]],
-            ["H [GPa]", None],
-            ["Er [GPa]", None],
-            [f"E [GPa] (PN={poisson_ratio}, Beta={beta}", None]
-            ]
 
 
 def get_measurements_meta_data(measurements: Collection) -> list:

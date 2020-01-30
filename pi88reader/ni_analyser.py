@@ -40,23 +40,27 @@ def get_subset_by_y(x_data: Iterable, y_data: Iterable, upper: float, lower: flo
     y_max = max(y_data)
 
     for x, y in zip(x_data, y_data):
-        if lower*y_max <= x <= upper*y_max:
+        if lower*y_max <= y <= upper*y_max:
             result["x"].append(x)
             result["y"].append(y)
 
     return result
 
 
-def fit_unloading(displacement: Iterable, load: Iterable, upper=95, lower=20) -> dict:
+def fit_unloading(displacement: Iterable, load: Iterable, upper=0.95, lower=0.20) -> dict:
     """
     Power law fit for unloading curve. Returns a dictionary with fit parameters and calculated S, Er and H
     """
     # *************************************
     # =======  (S = A * (x-_hf)**m) =======
     # *************************************
+    result = {"S": 0}
+    if len(displacement) == 0:
+        return result
     h_max = max(displacement)
-    x_data, y_data = get_subset_by_y(displacement, load, upper, lower)
-
+    x_data, y_data = get_subset_by_y(displacement, load, upper, lower).values()
+    if len(x_data) == 0:
+        return result
     A_estimate = 0.1
     hf_estimate = h_max * 0.9
     m_start = 1.8

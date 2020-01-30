@@ -21,6 +21,7 @@ import pptx_tools.style_sheets as style_sheets
 # todo: - create title slide (contact data, creation date ...)
 from pptx_tools.table_style import PPTXTableStyle
 
+from pi88reader.plotter_styles import GraphStyler
 from pi88reader.utils_pi88measurement import get_measurement_result_data, get_measurement_meta_data
 from pi88reader.utils_pi88measurements import get_date_intervall_string, get_aborted_measurements, \
     get_transducer_serials_string, get_triboscan_versions_string, get_feedback_modes_string, get_measurements_meta_data
@@ -96,11 +97,13 @@ class PI88ToPPTX:
 
         return result
 
-    def create_measurement_slide(self, measurement: PI88Measurement, layout = None):
+    def create_measurement_slide(self, measurement: PI88Measurement, layout = None, graph_styler = None):
         title = measurement.filename[:-4].split("/")[-1].split("\\")[-1]
         result = self.pptx_creator.add_slide(title, layout)
 
         plotter = PI88Plotter(measurement)
+        if graph_styler is not None:
+            plotter.graph_styler = graph_styler
         fig = plotter.get_load_displacement_plot()
         self.add_matplotlib_figure(fig, result, PPTXPosition(0.02, 0.15))
 
@@ -113,8 +116,10 @@ class PI88ToPPTX:
         if measurements is None:
             measurements = self.measurements
 
+        graph_styler = GraphStyler(len(self.measurements))
+
         for measurement in measurements:
-            result.append(self.create_measurement_slide(measurement, layout))
+            result.append(self.create_measurement_slide(measurement, layout, graph_styler))
 
         return result
 

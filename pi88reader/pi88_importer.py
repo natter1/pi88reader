@@ -169,7 +169,7 @@ class PI88Segments:
         using the condition_function to select segment of interest.
         :param array:
         :param segment_type:
-        :param occurence: int, optional
+        :param occurence: int, optional (-1 find last)
         :return: numpy.recarray
         """
         counter = 0

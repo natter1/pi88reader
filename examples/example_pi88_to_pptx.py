@@ -11,6 +11,8 @@ def run():
     # measurements_path = '../resources/AuSn_Creep/'
     # measurements_path = '../resources/creep_example/'
     measurements_path = '../resources/'
+    # measurements_path = '../resources/190829_Cu_400-867-03-Nr16/'
+
     #measurement = PI88Measurement(filename)
 
     pptx = PI88ToPPTX(measurements_path, TemplateExample())

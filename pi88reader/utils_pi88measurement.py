@@ -1,7 +1,7 @@
 """
 @author: Nathanael Jöhrmann
 """
-from pi88reader.ni_analyser import fit_unloading
+from pi88reader.ni_analyser import fit_unloading, calc_hardness, calc_Er
 from pi88reader.pi88_importer import SegmentType
 
 
@@ -27,14 +27,16 @@ def get_unloading_fit(measurement) -> float:
     result = fit_unloading(disp, load)
     return result
 
+
 def get_measurement_result_data(measurement: "PI88Measurement", poisson_ratio = 0.3, beta = 1.0) -> list:
     """Get table like result data for a measurement."""
-    dummy = get_unloading_fit(measurement)
+    unloading_fit = get_unloading_fit(measurement)
+
     print(get_unloading_fit(measurement)["S"])
     return [["H [GPa] (TriboScan)", f"{measurement.settings.dict['Quasi_Analysis_Hardness__GPa__']:.2f}"],
             ["Er [GPa] (Triboscan)",  f"{measurement.settings.dict['Quasi_Analysis_Reduced_Modulus__GPa__']:.2f}"],
-            ["H [GPa]", None],
-            ["Er [GPa]", get_unloading_fit(measurement)["S"]],  # todo: fix S -> Er
+            ["H [GPa]", f"{calc_hardness(measurement):.2f}"],
+            [f"Er [GPa] Beta={beta}", calc_Er(measurement, unloading_fit["S"], beta=beta)],
             [f"E [GPa] (PN={poisson_ratio}, Beta={beta}", None]
             ]
 

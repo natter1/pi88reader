@@ -1,10 +1,22 @@
 """
 @author: Nathanael Jöhrmann
 """
+import math
 from typing import Iterable
 
 import numpy as np
 from scipy.optimize import curve_fit
+
+from pi88reader.pi88_importer import SegmentType
+
+
+def calc_hardness(measurement) -> float:
+    header, time, disp, load = measurement.get_segment_curve(SegmentType.UNLOAD, occurence=-1)
+    if len(disp) == 0:
+        return 0
+    area_max = measurement.area_function.get_area(max(disp))  # todo: h_max - h_c
+    load_max = max(load)
+    return load_max / area_max * 1e3
 
 
 def calc_S(A, hf, m, h_max):
@@ -25,12 +37,18 @@ def get_power_law_fit(x_data: Iterable, y_data: Iterable, start_values: list,
     y_data = np.array(y_data)
     start_values = np.array(start_values)
 
-    popt, pcov = curve_fit(fit_function, x_data, y_data, p0=start_values,
-                           bounds=bounds, maxfev=100000)
+    try:
+        popt, pcov = curve_fit(fit_function, x_data, y_data, p0=start_values,
+                               bounds=bounds, maxfev=100000)
 
-    result["A"] = popt[0]
-    result["hf"] = popt[1]
-    result["m"] = popt[2]
+        result["A"] = popt[0]
+        result["hf"] = popt[1]
+        result["m"] = popt[2]
+    except ValueError:
+        result["A"] = 0
+        result["hf"] = 0
+        result["m"] = 0
+
     return result
 
 
@@ -62,7 +80,7 @@ def fit_unloading(displacement: Iterable, load: Iterable, upper=0.95, lower=0.20
     if len(x_data) == 0:
         return result
     A_estimate = 0.1
-    hf_estimate = h_max * 0.9
+    hf_estimate = min(displacement) * 0.9
     m_start = 1.8
 
     start_values = [A_estimate, hf_estimate, m_start]
@@ -75,6 +93,14 @@ def fit_unloading(displacement: Iterable, load: Iterable, upper=0.95, lower=0.20
     result["S"] = calc_S(**result, h_max=h_max)
 
     return result
+
+
+def calc_Er(measurement, stiffness, beta=1) -> float:
+    header, time, disp, load = measurement.get_segment_curve(SegmentType.UNLOAD, occurence=-1)
+    if len(disp) == 0:
+        return 0
+    area_max = measurement.area_function.get_area(max(disp))  # todo: h_max - h_c
+    return 0.5 / beta * (math.pi / area_max) ** 0.5 * stiffness * 1000
 
 
 # ********************************************************************************

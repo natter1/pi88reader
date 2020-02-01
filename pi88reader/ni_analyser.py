@@ -10,17 +10,12 @@ from scipy.optimize import curve_fit
 from pi88reader.pi88_importer import SegmentType
 
 
-def calc_hardness(measurement) -> float:
-    header, time, disp, load = measurement.get_segment_curve(SegmentType.UNLOAD, occurence=-1)
-    if len(disp) == 0:
-        return 0
-    area_max = measurement.area_function.get_area(max(disp))  # todo: h_max - h_c
-    load_max = max(load)
-    return load_max / area_max * 1e3
+def calc_hardness(P_max: float, Ac_max: float, **_) -> float:
+    return P_max / Ac_max * 1e3
 
 
-def calc_S(A, hf, m, h_max):
-    S = A * m * (h_max - hf) ** (m - 1)
+def calc_stiffness(fit_A, fit_hf, fit_m, h_max, **_):
+    S = fit_A * fit_m * (h_max - fit_hf) ** (fit_m - 1)
     return S
 
 
@@ -41,13 +36,17 @@ def get_power_law_fit(x_data: Iterable, y_data: Iterable, start_values: list,
         popt, pcov = curve_fit(fit_function, x_data, y_data, p0=start_values,
                                bounds=bounds, maxfev=100000)
 
-        result["A"] = popt[0]
-        result["hf"] = popt[1]
-        result["m"] = popt[2]
+        result.update({"fit_failed": False, "fit_A": popt[0], "fit_hf": popt[1], "fit_m": popt[2]})
+        # result["fit_failed"] = False
+        # result["fit_A"] = popt[0]
+        # result["fit_hf"] = popt[1]
+        # result["fit_m"] = popt[2]
     except ValueError:
-        result["A"] = 0
-        result["hf"] = 0
-        result["m"] = 0
+        result.update({"fit_failed": True, "fit_A": 0, "fit_hf": 0, "fit_m": 0})
+        # result["fit_failed"] = True
+        # result["fit_A"] = 0
+        # result["fit_hf"] = 0
+        # result["fit_m"] = 0
 
     return result
 
@@ -65,17 +64,11 @@ def get_subset_by_y(x_data: Iterable, y_data: Iterable, upper: float, lower: flo
     return result
 
 
-def fit_unloading(displacement: Iterable, load: Iterable, upper=0.95, lower=0.20) -> dict:
+def fit_unloading(displacement: Iterable, load: Iterable, upper, lower) -> dict:
     """
-    Power law fit for unloading curve. Returns a dictionary with fit parameters and calculated S, Er and H
+    Power law fit for unloading curve. Returns a dictionary with fit parameters
     """
-    # *************************************
-    # =======  (S = A * (x-_hf)**m) =======
-    # *************************************
-    result = {"S": 0}
-    if len(displacement) == 0:
-        return result
-    h_max = max(displacement)
+    result = {}
     x_data, y_data = get_subset_by_y(displacement, load, upper, lower).values()
     if len(x_data) == 0:
         return result
@@ -86,21 +79,49 @@ def fit_unloading(displacement: Iterable, load: Iterable, upper=0.95, lower=0.20
     start_values = [A_estimate, hf_estimate, m_start]
 
     bounds = ((0, 0, 1),
-              (1e6, h_max, 1e6)
+              (1e6, max(x_data), 1e6)
               )  # don't use np.inf instead of 1e6! - somehow this leads to curve_fit-failure
 
     result = get_power_law_fit(x_data, y_data, start_values, bounds)
-    result["S"] = calc_S(**result, h_max=h_max)
+
 
     return result
 
 
-def calc_Er(measurement, stiffness, beta=1) -> float:
-    header, time, disp, load = measurement.get_segment_curve(SegmentType.UNLOAD, occurence=-1)
-    if len(disp) == 0:
-        return 0
-    area_max = measurement.area_function.get_area(max(disp))  # todo: h_max - h_c
-    return 0.5 / beta * (math.pi / area_max) ** 0.5 * stiffness * 1000
+def calc_Er(Ac_max: float, stiffness: float, beta: float, **_) -> float:
+    return 0.5 / beta * (math.pi / Ac_max) ** 0.5 * stiffness * 1000
+
+
+def calc_hc(h_max: float, P_max: float, stiffness: float, **_):
+    # hc = h - 0.75*Pmax/S
+    return h_max - 0.75 * P_max / stiffness
+
+
+def calc_unloading_data(measurement, upper=0.95, lower=0.20, beta=1, poisson_ratio=0.3) -> dict:
+    result = {
+        "beta": beta,
+        "poisson_ratio": poisson_ratio,
+        "h_max": 0, "P_max": 0,
+        "fit_A": 0, "fit_hf": 0, "fit_m": 0, "fit_failed": True,
+        "stiffness": 0,
+        "hc_max": 0, "Ac_max": 0,
+        "hardness": 0,
+        "Er": 0, "E": 0
+    }
+    header, time, displacement, load = measurement.get_segment_curve(SegmentType.UNLOAD, occurence=-1)
+    if len(displacement) == 0:
+        return result
+    result["h_max"] = max(displacement)
+    result["P_max"] = max(load)
+    result.update(fit_unloading(displacement, load, upper, lower))
+    if result["fit_failed"]:
+        return result
+    result["stiffness"] = calc_stiffness(**result)
+    result["hc_max"] = calc_hc(**result)
+    result["Ac_max"] = measurement.area_function.get_area(result["hc_max"])
+    result["hardness"] = calc_hardness(**result)
+    result["Er"] = calc_Er(**result)
+    return result
 
 
 # ********************************************************************************

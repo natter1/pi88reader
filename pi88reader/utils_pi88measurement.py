@@ -1,7 +1,7 @@
 """
 @author: Nathanael Jöhrmann
 """
-from pi88reader.ni_analyser import fit_unloading, calc_hardness, calc_Er
+from pi88reader.ni_analyser import fit_unloading, calc_hardness, calc_Er, calc_unloading_data
 from pi88reader.pi88_importer import SegmentType
 
 
@@ -22,21 +22,20 @@ def is_drift_corrected(measurement) -> bool:
 def get_drift_rate(measurement) -> float:
     return measurement.settings.dict["Current_Drift_Rate__nm___s__"]
 
-def get_unloading_fit(measurement) -> float:
-    header, time, disp, load = measurement.get_segment_curve(SegmentType.UNLOAD, occurence=-1)  # -1 -> last one found
-    result = fit_unloading(disp, load)
-    return result
+# def get_unloading_fit(measurement) -> float:
+#     header, time, disp, load = measurement.get_segment_curve(SegmentType.UNLOAD, occurence=-1)  # -1 -> last one found
+#     result = fit_unloading(disp, load)
+#     return result
 
 
-def get_measurement_result_data(measurement: "PI88Measurement", poisson_ratio = 0.3, beta = 1.0) -> list:
+def get_measurement_result_data(measurement: "PI88Measurement", poisson_ratio=0.3, beta=1.0) -> list:
     """Get table like result data for a measurement."""
-    unloading_fit = get_unloading_fit(measurement)
+    data = calc_unloading_data(measurement, poisson_ratio=0.3, beta=1.0)
 
-    print(get_unloading_fit(measurement)["S"])
     return [["H [GPa] (TriboScan)", f"{measurement.settings.dict['Quasi_Analysis_Hardness__GPa__']:.2f}"],
             ["Er [GPa] (Triboscan)",  f"{measurement.settings.dict['Quasi_Analysis_Reduced_Modulus__GPa__']:.2f}"],
-            ["H [GPa]", f"{calc_hardness(measurement):.2f}"],
-            [f"Er [GPa] Beta={beta}", calc_Er(measurement, unloading_fit["S"], beta=beta)],
+            ["H [GPa]", f"{data['hardness']:.2f}"],
+            [f"Er [GPa] Beta={beta}", f"{data['Er']:.2f}"],
             [f"E [GPa] (PN={poisson_ratio}, Beta={beta}", None]
             ]
 

@@ -15,7 +15,7 @@ from pptx_tools.templates import analyze_pptx
 from pi88reader.pi88_importer import PI88Measurement, load_tdm_files
 from pi88reader.pi88_plotter import PI88Plotter
 from pi88reader.plotter_styles import GraphStyler
-from pi88reader.pptx_styles import table_style_summary
+from pi88reader.pptx_styles import table_style_summary, table_style_measurements_meta
 from pi88reader.utils_pi88measurement import get_measurement_result_data, get_measurement_meta_data
 from pi88reader.utils_pi88measurements import get_measurements_meta_data, \
     get_measurements_result_data
@@ -140,10 +140,9 @@ class PI88ToPPTX:
     def create_measurements_meta_table(self, slide, table_style: PPTXTableStyle = None):
         table_data = get_measurements_meta_data(self.measurements)
 
-        result = self.pptx_creator.add_table(slide, table_data, PPTXPosition(0.021, 0.26))
+        result = self.pptx_creator.add_table(slide, table_data)
         if table_style is None:
-            table_style = style_sheets.table_no_header()
-            table_style.set_width_as_fraction(0.52)
+            table_style = table_style_measurements_meta()
         table_style.write_shape(result)
         return result
 

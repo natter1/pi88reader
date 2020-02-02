@@ -10,14 +10,26 @@ from scipy.optimize import curve_fit
 from pi88reader.pi88_importer import SegmentType
 
 
-def calc_hardness(P_max: float, Ac_max: float, **_) -> float:
-    return P_max / Ac_max * 1e3
-
-
 def calc_stiffness(fit_A, fit_hf, fit_m, h_max, **_):
     S = fit_A * fit_m * (h_max - fit_hf) ** (fit_m - 1)
     return S
 
+
+def calc_hc(h_max: float, P_max: float, stiffness: float, **_):
+    # hc = h - 0.75*Pmax/S
+    return h_max - 0.75 * P_max / stiffness
+
+
+def calc_hardness(P_max: float, Ac_max: float, **_) -> float:
+    return P_max / Ac_max * 1e3
+
+
+def calc_Er(Ac_max: float, stiffness: float, beta: float, **_) -> float:
+    return 0.5 / beta * (math.pi / Ac_max) ** 0.5 * stiffness * 1000
+
+
+def calc_E(Er: float, poisson_ratio: float, E_tip: float = 1140, poisson_ratio_tip: float = 0.07, **_):
+    return (1 - poisson_ratio ** 2) / (1 / Er - (1 - poisson_ratio_tip ** 2) / (E_tip))  # * 1e9))
 
 def get_power_law_fit(x_data: Iterable, y_data: Iterable, start_values: list,
                       bounds: tuple = ((0, 0, 1), (np.inf, np.inf, np.inf))
@@ -33,20 +45,10 @@ def get_power_law_fit(x_data: Iterable, y_data: Iterable, start_values: list,
     start_values = np.array(start_values)
 
     try:
-        popt, pcov = curve_fit(fit_function, x_data, y_data, p0=start_values,
-                               bounds=bounds, maxfev=100000)
-
+        popt, pcov = curve_fit(fit_function, x_data, y_data, p0=start_values, bounds=bounds, maxfev=100000)
         result.update({"fit_failed": False, "fit_A": popt[0], "fit_hf": popt[1], "fit_m": popt[2]})
-        # result["fit_failed"] = False
-        # result["fit_A"] = popt[0]
-        # result["fit_hf"] = popt[1]
-        # result["fit_m"] = popt[2]
     except ValueError:
         result.update({"fit_failed": True, "fit_A": 0, "fit_hf": 0, "fit_m": 0})
-        # result["fit_failed"] = True
-        # result["fit_A"] = 0
-        # result["fit_hf"] = 0
-        # result["fit_m"] = 0
 
     return result
 
@@ -88,15 +90,6 @@ def fit_unloading(displacement: Iterable, load: Iterable, upper, lower) -> dict:
     return result
 
 
-def calc_Er(Ac_max: float, stiffness: float, beta: float, **_) -> float:
-    return 0.5 / beta * (math.pi / Ac_max) ** 0.5 * stiffness * 1000
-
-
-def calc_hc(h_max: float, P_max: float, stiffness: float, **_):
-    # hc = h - 0.75*Pmax/S
-    return h_max - 0.75 * P_max / stiffness
-
-
 def calc_unloading_data(measurement, upper=0.95, lower=0.20, beta=1, poisson_ratio=0.3) -> dict:
     result = {
         "beta": beta,
@@ -121,6 +114,7 @@ def calc_unloading_data(measurement, upper=0.95, lower=0.20, beta=1, poisson_rat
     result["Ac_max"] = measurement.area_function.get_area(result["hc_max"])
     result["hardness"] = calc_hardness(**result)
     result["Er"] = calc_Er(**result)
+    result["E"] = calc_E(**result)
     return result
 
 

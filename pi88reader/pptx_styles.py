@@ -9,6 +9,20 @@ def table_style_summary():
     result.col_ratios = [3.95, 1.05, 1, 1]
     return result
 
+
+def table_style_measurements_meta():
+    result = PPTXTableStyle()
+
+    result.first_row_header = False
+    result.row_banding = True
+    result.col_banding = False
+
+    result.position = PPTXPosition(0.021, 0.26)
+    result.set_width_as_fraction(0.52)
+    result.col_ratios = [1, 1]
+
+    return result
+
 #
 # def table_invisible() -> PPTXTableStyle:
 #     result = PPTXTableStyle()
@@ -17,11 +31,3 @@ def table_style_summary():
 #     # todo: implement control for border lines
 #     return result
 #
-# def table_no_header() -> PPTXTableStyle:
-#     result = PPTXTableStyle()
-#
-#     result.first_row_header = False
-#     result.row_banding = True
-#     result.col_banding = False
-#
-#     return result

@@ -45,11 +45,12 @@ def get_power_law_fit(x_data: Iterable, y_data: Iterable, start_values: list,
     start_values = np.array(start_values)
 
     try:
-        popt, pcov = curve_fit(fit_function, x_data, y_data, p0=start_values, bounds=bounds, maxfev=100000)
+        popt, pcov = curve_fit(fit_function, x_data, y_data, p0=start_values, bounds=bounds, maxfev=10000)
         result.update({"fit_failed": False, "fit_A": popt[0], "fit_hf": popt[1], "fit_m": popt[2]})
     except ValueError:
         result.update({"fit_failed": True, "fit_A": 0, "fit_hf": 0, "fit_m": 0})
-
+    except RuntimeError:  # no solution with maxfev (maximal number of function evaluations) iterations
+        result.update({"fit_failed": True, "fit_A": 0, "fit_hf": 0, "fit_m": 0})
     return result
 
 

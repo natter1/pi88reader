@@ -172,6 +172,8 @@ class PI88Segments:
         :param occurence: int, optional (-1 find last)
         :return: numpy.recarray
         """
+        begin = -1
+        end = -1
         counter = 0
         for i in range(len(self.begin_demand)):
             if segment_type == self.segment_type[i]:

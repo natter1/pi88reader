@@ -211,14 +211,22 @@ class TDMData:
             return None
         else:
             ext_attribs = self.root.find(f".//file/block[@id='{inc}']").attrib
-            return np.memmap(
-                self._tdx_path,
-                offset=int(ext_attribs['byteOffset']),
-                shape=(int(ext_attribs['length']),),
-                dtype=self._get_dtype_from_tdm_type(ext_attribs['valueType']),
-                mode='r',
-                order=self._tdx_order
-            ).view(np.recarray)
+            try:
+                if self._tdm_filename[:-3] != self._tdx_filename[:-3]:
+                    print(f"Warning: TDM: {self._tdm_filename} - TDX: {self._tdx_filename}")
+                return np.memmap(
+                    self._tdx_path,
+                    offset=int(ext_attribs['byteOffset']),
+                    shape=(int(ext_attribs['length']),),
+                    dtype=self._get_dtype_from_tdm_type(ext_attribs['valueType']),
+                    mode='r',
+                    order=self._tdx_order
+                ).view(np.recarray)
+            except Exception as e:
+                import sys
+                additional_info = f" - TDM: {self._tdm_filename} - TDX: {self._tdx_filename}"
+                raise type(e)(str(e) + additional_info).with_traceback(sys.exc_info()[2])
+
 
     def _read_data(self, channel, attribute_name, to_object):
         if channel:

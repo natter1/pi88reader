@@ -31,7 +31,7 @@ def get_drift_rate(measurement) -> float:
 def get_measurement_result_data(measurement: "PI88Measurement", poisson_ratio=0.3, beta=1.0) -> list:
     """Get table like result data for a measurement."""
     data = calc_unloading_data(measurement, poisson_ratio=0.3, beta=1.0)
-    if measurement.settings.dict["Quasi_Analysis_Fit_Has_Been_Done"] == 0:
+    if measurement.settings.dict["Quasi_Analysis_Fit_Has_Been_Done"] == -1: #0:
         H_triboscan = "no fit done"
         Er_triboscan = "no fit done"
     else:

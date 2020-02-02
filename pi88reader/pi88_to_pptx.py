@@ -1,30 +1,24 @@
 """
 @author: Nathanael Jöhrmann
 """
-import glob
 import os
-from datetime import datetime
 from typing import Union, Iterable, Optional, List
 
 import matplotlib.pyplot as plt
-from pptx.enum.dml import MSO_THEME_COLOR_INDEX
-from pptx.shapes.autoshape import Shape
-from pptx.util import Inches
-
-from pptx_tools.templates import analyze_pptx
-from pi88reader.pi88_importer import PI88Measurement, load_tdm_files
-from pi88reader.pi88_plotter import PI88Plotter
-from pptx_tools.creator import PPTXCreator, PPTXPosition
 import pptx_tools.style_sheets as style_sheets
-
-
+from pptx.shapes.autoshape import Shape
+from pptx_tools.creator import PPTXCreator, PPTXPosition
 # todo: - create title slide (contact data, creation date ...)
 from pptx_tools.table_style import PPTXTableStyle
+from pptx_tools.templates import analyze_pptx
 
+from pi88reader.pi88_importer import PI88Measurement, load_tdm_files
+from pi88reader.pi88_plotter import PI88Plotter
 from pi88reader.plotter_styles import GraphStyler
+from pi88reader.pptx_styles import table_style_summary
 from pi88reader.utils_pi88measurement import get_measurement_result_data, get_measurement_meta_data
-from pi88reader.utils_pi88measurements import get_date_intervall_string, get_aborted_measurements, \
-    get_transducer_serials_string, get_triboscan_versions_string, get_feedback_modes_string, get_measurements_meta_data
+from pi88reader.utils_pi88measurements import get_measurements_meta_data, \
+    get_measurements_result_data
 
 
 def main():
@@ -82,7 +76,9 @@ class PI88ToPPTX:
 
         plotter = PI88Plotter(self.measurements)
         fig = plotter.get_load_displacement_plot()
+        fig.axes[0].legend(loc="best")
         self.add_matplotlib_figure(fig, result, PPTXPosition(0.02, 0.15))
+        self.create_measurements_result_data_table(result)
         return result
 
     def create_title_slide(self, title=None, layout=None, default_content=False):
@@ -94,11 +90,10 @@ class PI88ToPPTX:
         plotter = PI88Plotter(self.measurements)
         fig = plotter.get_load_displacement_plot()
         self.add_matplotlib_figure(fig, result, PPTXPosition(0.57, 0.24))
-
         return result
 
     def create_measurement_slide(self, measurement: PI88Measurement, layout = None, graph_styler = None):
-        title = measurement.filename[:-4].split("/")[-1].split("\\")[-1]
+        title = measurement.base_name  # filename[:-4].split("/")[-1].split("\\")[-1]
         result = self.pptx_creator.add_slide(title, layout)
 
         plotter = PI88Plotter(measurement)
@@ -152,36 +147,16 @@ class PI88ToPPTX:
         table_style.write_shape(result)
         return result
 
+    def create_measurements_result_data_table(self, slide, table_style: PPTXTableStyle = None):
+        table_data = get_measurements_result_data(self.measurements)
+        result = self.pptx_creator.add_table(slide, table_data)
+        if table_style is None:
+            table_style = table_style_summary()
+        table_style.write_shape(result)
+        return result
+
     def save(self, filename="delme.prs"):
         self.prs.save(filename)
-
-    # def set_first_slide(self):
-    #     layout = self.prs.slide_layouts[0]
-    #     slide = self.prs.slides.add_slide(layout)
-    #     # slide.shapes[2].element.getparent().remove(slide.shapes[2].element)
-    #     title = slide.shapes.title
-    #     title.text = self.measurement.filename
-    #     pptx_templates.remove_unpopulated_shapes(slide)
-
-    # def add_matplotlib_figure(self, fig, slide, **kwargs):
-    #     """
-    #     kwargs["left"] = 0
-    #     kwargs["top"] = 0
-    #     :param fig:
-    #     :param slide:
-    #     :return: prs.shapes.picture.Picture
-    #     """
-    #     #left = top = Inches(1)
-    #     if not "left" in kwargs:
-    #         kwargs["left"] = 0
-    #     if not "top" in kwargs:
-    #         kwargs["top"] = 0
-    #
-    #     with io.BytesIO() as output:
-    #         fig.savefig(output, format="png")
-    #         pic = slide.shapes.add_picture(output, **kwargs) #0, 0)#, left, top)
-    #     return pic
-
 
 
 

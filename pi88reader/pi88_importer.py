@@ -338,6 +338,9 @@ class PI88Measurement:
                   f"load[{self.load_unit}]"]
         return header, self.time[mask], self.depth[mask], self.load[mask]
 
+    @property
+    def base_name(self) -> str:
+        return self.filename[:-4].split("/")[-1].split("\\")[-1]
 
 if __name__ == "__main__":
     main()

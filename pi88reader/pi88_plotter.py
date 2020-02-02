@@ -45,8 +45,8 @@ class PI88Plotter:
         axes.set_ylabel(y_label)
         return figure, axes
 
-    def add_curve_to_axes(self, x, y, axes):  # todo: kwargs? legend entry etc.?
-        axes.plot(x, y, **self.graph_styler.dict)  # **self.marker_style, **self.line_style)
+    def add_curve_to_axes(self, x, y, axes, label=None):  # todo: kwargs? legend entry etc.?
+        axes.plot(x, y, **self.graph_styler.dict, label=label)  # **self.marker_style, **self.line_style)
         self.graph_styler.next_style()
 
     def get_load_displacement_plot(self) -> Figure:
@@ -68,7 +68,8 @@ class PI88Plotter:
         for measurement in self.measurements:
             x = getattr(measurement, x_attr_name)
             y = getattr(measurement, y_attr_name)
-            self.add_curve_to_axes(x, y, axes)
+            graph_label = measurement.base_name
+            self.add_curve_to_axes(x, y, axes, label=graph_label)
         figure.tight_layout()
         return figure
 

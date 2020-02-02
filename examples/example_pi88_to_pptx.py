@@ -10,7 +10,7 @@ def run():
     filename = '../resources/AuSn_Creep/1000uN 01 LC.tdm'
     # measurements_path = '../resources/AuSn_Creep/'
     # measurements_path = '../resources/creep_example/'
-    measurements_path = '../resources/'
+    measurements_path = '../resources/d/'
     # measurements_path = '../resources/190829_Cu_400-867-03-Nr16/'
 
     #measurement = PI88Measurement(filename)

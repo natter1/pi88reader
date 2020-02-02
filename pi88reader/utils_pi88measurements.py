@@ -9,6 +9,8 @@ from typing import Iterable, Sized, Collection
 
 # 'Acquisition_Transducer_Serial'
 # 'Acquisition_TriboScan_Version'
+from pi88reader.ni_analyser import calc_unloading_data
+from pi88reader.utils_pi88measurement import get_measurement_result_data
 
 
 def get_set_by_setting_name(name: str, measurements: Iterable) -> set:
@@ -100,4 +102,14 @@ def get_measurements_meta_data(measurements: Collection) -> list:
             ["Measurement dates: ", get_date_intervall_string(measurements)],
             ["Transducer serials: ", get_transducer_serials_string(measurements)],
             ["Triboscan versions: ", get_triboscan_versions_string(measurements)]]
+
+
+def get_measurements_result_data(measurements: Collection) -> list:
+    result = [["Name", "Er [GPa]", "E [GPa]", "H [GPa"]]
+
+    for measurement in measurements:
+        data = calc_unloading_data(measurement)
+        result.append([measurement.base_name, f"{data['Er']:.2f}", f"{data['E']:.2f}", f"{data['hardness']:.2f}"])
+
+    return result
 

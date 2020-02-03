@@ -31,9 +31,7 @@ def calc_Er(Ac_max: float, stiffness: float, beta: float, **_) -> float:
 def calc_E(Er: float, poisson_ratio: float, E_tip: float = 1140, poisson_ratio_tip: float = 0.07, **_):
     return (1 - poisson_ratio ** 2) / (1 / Er - (1 - poisson_ratio_tip ** 2) / (E_tip))  # * 1e9))
 
-def get_power_law_fit(x_data: Iterable, y_data: Iterable, start_values: list,
-                      bounds: tuple = ((0, 0, 1), (np.inf, np.inf, np.inf))
-                      ) -> dict:
+def get_power_law_fit(x_data: Iterable, y_data: Iterable, start_values: list,) -> dict:
 
     def fit_function(x, _A, _hf, _m):
         return _A * (x - _hf) ** _m
@@ -45,9 +43,9 @@ def get_power_law_fit(x_data: Iterable, y_data: Iterable, start_values: list,
     start_values = np.array(start_values)
 
     try:
-        popt, pcov = curve_fit(fit_function, x_data, y_data, p0=start_values, bounds=bounds, maxfev=10000)
+        popt, pcov = curve_fit(fit_function, x_data, y_data, p0=start_values, maxfev=10000, method='lm')
         result.update({"fit_failed": False, "fit_A": popt[0], "fit_hf": popt[1], "fit_m": popt[2]})
-    except ValueError:
+    except ValueError as e:
         result.update({"fit_failed": True, "fit_A": 0, "fit_hf": 0, "fit_m": 0})
     except RuntimeError:  # no solution with maxfev (maximal number of function evaluations) iterations
         result.update({"fit_failed": True, "fit_A": 0, "fit_hf": 0, "fit_m": 0})
@@ -81,11 +79,7 @@ def fit_unloading(displacement: Iterable, load: Iterable, upper, lower) -> dict:
 
     start_values = [A_estimate, hf_estimate, m_start]
 
-    bounds = ((0, 0, 1),
-              (1e6, max(x_data), 1e6)
-              )  # don't use np.inf instead of 1e6! - somehow this leads to curve_fit-failure
-
-    result = get_power_law_fit(x_data, y_data, start_values, bounds)
+    result = get_power_law_fit(x_data, y_data, start_values)
 
 
     return result

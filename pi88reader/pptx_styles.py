@@ -10,6 +10,19 @@ def table_style_summary():
     return result
 
 
+def table_style_measurement_result():
+    result = PPTXTableStyle()
+
+    result.first_row_header = False
+    result.row_banding = True
+    result.col_banding = False
+
+    result.position = PPTXPosition(0.521, 0.56)
+    result.set_width_as_fraction(0.4)
+    result.col_ratios = [1, 1]
+    return result
+
+
 def table_style_measurements_meta():
     result = PPTXTableStyle()
 

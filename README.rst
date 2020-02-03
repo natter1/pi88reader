@@ -50,11 +50,14 @@ class PI88Plotter
     plotter.get_displacement_time_plot().savefig("plotter01_bernhard_4_style.png")
 
 
-.. image:: https://github.com/natter1/pi88reader/raw/master/docs/images/plotter01_default_style.png
+.. |image01| image:: https://github.com/natter1/pi88reader/raw/master/docs/images/plotter01_default_style.png
     :width: 240pt
-.. image:: https://github.com/natter1/pi88reader/raw/master/docs/images/plotter01_bernhard_4_style.png
+.. |image02| image:: https://github.com/natter1/pi88reader/raw/master/docs/images/plotter01_bernhard_4_style.png
     :width: 240pt
 
++-----------+-----------+
+| |image01| | |image02| |
++-----------+-----------+
 
 License and Acknowledgments
 ---------------------------

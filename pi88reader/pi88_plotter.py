@@ -2,12 +2,13 @@
 @author: Nathanael Jöhrmann
 """
 import os
-from typing import Union, List, Tuple, Iterable, Optional
+from typing import Union, List, Tuple, Iterable, Optional, ValuesView
 from matplotlib.figure import Figure
 from matplotlib.pyplot import Axes
 import matplotlib.pyplot as plt
 import numpy as np
 
+from pi88reader.ni_analyser import calc_unloading_data
 from pi88reader.pi88_importer import PI88Measurement, load_tdm_files
 import pi88reader.pi88_importer as pi88_importer
 from pi88reader.plotter_styles import PlotterStyle, GraphStyler
@@ -57,6 +58,46 @@ class PI88Plotter:
 
     def get_displacement_time_plot(self):
         return self.get_plot(pi88_importer.Data.TIME, pi88_importer.Data.DISPLACEMENT)
+
+    def get_reduced_modulus_plot(self, data_list: Union[ValuesView, Iterable[dict]] = None,
+                                 upper: float = 0.95, lower: float = 0.2, beta: float = 1.0):
+        if data_list is None:
+            data_list = []
+        for measurement in self.measurements:
+            data_list.append(calc_unloading_data(measurement, upper, lower, beta))
+
+        x = []
+        y = []
+        for data in data_list:
+            x.append(data["base_name"])
+            y.append(data["Er"])
+
+        figure, axes = self.create_figure_with_axes(x_label=f"", y_label=f"Er [GPa]")
+        self.add_curve_to_axes(x, y, axes)
+        for tick in axes.get_xticklabels():
+            tick.set_rotation(90)
+        figure.tight_layout()
+        return figure
+
+    def get_hardness_plot(self, data_list: Union[ValuesView, Iterable[dict]] = None,
+                                 upper: float = 0.95, lower: float = 0.2, beta: float = 1.0):
+        if data_list is None:
+            data_list = []
+        for measurement in self.measurements:
+            data_list.append(calc_unloading_data(measurement, upper, lower, beta))
+
+        x = []
+        y = []
+        for data in data_list:
+            x.append(data["base_name"])
+            y.append(data["hardness"])
+
+        figure, axes = self.create_figure_with_axes(x_label=f"", y_label=f"H [GPa]")
+        self.add_curve_to_axes(x, y, axes)
+        for tick in axes.get_xticklabels():
+            tick.set_rotation(90)
+        figure.tight_layout()
+        return figure
 
     def get_plot(self, data_x: pi88_importer.Data, data_y: pi88_importer.Data) -> Figure:
         data_type = pi88_importer.DATA_TYPE_DICT

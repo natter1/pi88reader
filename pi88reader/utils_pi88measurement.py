@@ -1,6 +1,8 @@
 """
 @author: Nathanael Jöhrmann
 """
+from typing import Tuple, List
+
 from pi88reader.ni_analyser import fit_unloading, calc_hardness, calc_Er, calc_unloading_data
 from pi88reader.pi88_importer import SegmentType
 
@@ -28,9 +30,8 @@ def get_drift_rate(measurement) -> float:
 #     return result
 
 
-def get_measurement_result_data(measurement: "PI88Measurement", poisson_ratio=0.3, beta=1.0) -> list:
-    """Get table like result data for a measurement."""
-    data = calc_unloading_data(measurement, poisson_ratio=0.3, beta=1.0)
+def get_measurement_result_table_data(measurement: "PI88Measurement", data: dict) -> List[List[str]]:
+    """Get table like result data for a measurement. The data dict can be calculated via calc_unloading_data."""
     if measurement.settings.dict["Quasi_Analysis_Fit_Has_Been_Done"] == -1: #0:
         H_triboscan = "no fit done"
         Er_triboscan = "no fit done"
@@ -40,14 +41,14 @@ def get_measurement_result_data(measurement: "PI88Measurement", poisson_ratio=0.
         Er_triboscan = f"{measurement.settings.dict['Quasi_Analysis_Reduced_Modulus__GPa__']:.2f}"
 
     return [["H [GPa] (TriboScan)", H_triboscan],
-            ["Er [GPa] (Triboscan)", Er_triboscan],
+            ["Er [GPa] (TriboScan)", Er_triboscan],
             ["H [GPa]", f"{data['hardness']:.2f}"],
-            [f"Er [GPa] (\u03B2={beta})", f"{data['Er']:.2f}"],
-            [f"E [GPa] (\u03BD={poisson_ratio})", f"{data['E']:.2f}"]
+            [f"Er [GPa] (\u03B2={data['beta']})", f"{data['Er']:.2f}"],
+            [f"E [GPa] (\u03BD={data['poisson_ratio']})", f"{data['E']:.2f}"]
             ]
 
 
-def get_measurement_meta_data(measurement: "PI88Measurement") -> list:
+def get_measurement_meta_table_data(measurement: "PI88Measurement") -> list:
     return [["Filename (original):", measurement.settings.dict["Acquisition_Quasi_File_Name"]],
             ["Measurement date:", measurement.settings.dict["Acquisition_Timestamp"].date()],
             ["Measurement aborted:", f"{is_aborted_measurement(measurement)}"],

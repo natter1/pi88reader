@@ -44,7 +44,7 @@ class Data(Enum):
 DATA_TYPE_DICT = {  # name, unit, PI88Measurement attribute name
     Data.TIME: ("time", "s", "time"),
     Data.LOAD: ("load", "µN", "load"),
-    Data.DISPLACEMENT: ("displacement", "nm", "depth")
+    Data.DISPLACEMENT: ("displacement", "nm", "depth"),
 }
 
 

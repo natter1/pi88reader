@@ -8,22 +8,17 @@ import matplotlib.pyplot as plt
 import pptx_tools.style_sheets as style_sheets
 from pptx.shapes.autoshape import Shape
 from pptx_tools.creator import PPTXCreator, PPTXPosition
-# todo: - create title slide (contact data, creation date ...)
 from pptx_tools.table_style import PPTXTableStyle
 from pptx_tools.templates import analyze_pptx
 
+from pi88reader.ni_analyser import calc_unloading_data
 from pi88reader.pi88_importer import PI88Measurement, load_tdm_files
 from pi88reader.pi88_plotter import PI88Plotter
 from pi88reader.plotter_styles import GraphStyler
 from pi88reader.pptx_styles import table_style_summary, table_style_measurements_meta
-from pi88reader.utils_pi88measurement import get_measurement_result_data, get_measurement_meta_data
-from pi88reader.utils_pi88measurements import get_measurements_meta_data, \
-    get_measurements_result_data
-
-
-def main():
-    TEMPLATE_FILENAME = '..\\resources\\pptx_template\\example-template.pptx'
-    analyze_pptx(TEMPLATE_FILENAME)
+from pi88reader.utils_pi88measurement import get_measurement_result_table_data, get_measurement_meta_table_data
+from pi88reader.utils_pi88measurements import get_measurements_meta_table_data, \
+    get_measurements_result_table_data
 
 
 class PI88ToPPTX:
@@ -40,13 +35,7 @@ class PI88ToPPTX:
         self.poisson_ratio = 0.3
         self.beta = 1.0
 
-        # fig_width = 8
-        # fig_height = 4.5
-        # fig = self.plotter.get_load_displacement_plot((fig_width,fig_height))
-        # zoom = 1.0
-        # picture = self.add_matplotlib_figure(fig, self.prs.slides[0], width=Inches(fig_height*zoom))
-        # picture.left = Inches(1)
-        # picture.top = Inches(3)
+        self.measurements_unloading_data: dict = {}
 
     def load_tdm_files(self, path: str, sort_key=os.path.getctime):  # sorted by creation time (using windows)
         self.measurements.extend(load_tdm_files(path, sort_key))
@@ -79,6 +68,17 @@ class PI88ToPPTX:
         fig.axes[0].legend(loc="best")
         self.add_matplotlib_figure(fig, result, PPTXPosition(0.02, 0.15))
         self.create_measurements_result_data_table(result)
+        return result
+
+    def create_modulus_hardness_summary_slide(self, layout=None):
+        title = "Summary - reduced modulus and hardness"
+        result = self.pptx_creator.add_slide(title, layout)
+
+        plotter = PI88Plotter(self.measurements)
+        fig = plotter.get_reduced_modulus_plot()
+        self.add_matplotlib_figure(fig, result, PPTXPosition(0.02, 0.15))
+        fig = plotter.get_hardness_plot()
+        self.add_matplotlib_figure(fig, result, PPTXPosition(0.52, 0.15))
         return result
 
     def create_title_slide(self, title=None, layout=None, default_content=False):
@@ -119,7 +119,7 @@ class PI88ToPPTX:
         return result
 
     def create_measurement_meta_data_table(self, slide, measurement, table_style: PPTXTableStyle = None) -> Shape:
-        table_data = get_measurement_meta_data(measurement)
+        table_data = get_measurement_meta_table_data(measurement)
         result = self.pptx_creator.add_table(slide, table_data, PPTXPosition(0.521, 0.16))
         if table_style is None:
             table_style = style_sheets.table_no_header()
@@ -127,8 +127,16 @@ class PI88ToPPTX:
         table_style.write_shape(result)
         return result
 
+    def _get_measurement_result_table_data(self, measurement: PI88Measurement, poisson_ratio: float, beta: float) -> list:
+        if (measurement, poisson_ratio, beta) in self.measurements_unloading_data:
+            data = self.measurements_unloading_data[(measurement, poisson_ratio, beta)]
+        else:
+            data = calc_unloading_data(measurement, beta=self.beta, poisson_ratio=self.poisson_ratio)
+            self.measurements_unloading_data[(measurement, poisson_ratio, beta)] = data
+        return get_measurement_result_table_data(measurement, data)
+
     def create_measurement_result_table(self, slide, measurement, table_style: PPTXTableStyle = None) -> Shape:
-        table_data = get_measurement_result_data(measurement, self.poisson_ratio, self.beta)
+        table_data = self._get_measurement_result_table_data(measurement, self.poisson_ratio, self.beta)
 
         result = self.pptx_creator.add_table(slide, table_data, PPTXPosition(0.521, 0.56))
         if table_style is None:
@@ -138,7 +146,7 @@ class PI88ToPPTX:
         return result
 
     def create_measurements_meta_table(self, slide, table_style: PPTXTableStyle = None):
-        table_data = get_measurements_meta_data(self.measurements)
+        table_data = get_measurements_meta_table_data(self.measurements)
 
         result = self.pptx_creator.add_table(slide, table_data)
         if table_style is None:
@@ -147,7 +155,7 @@ class PI88ToPPTX:
         return result
 
     def create_measurements_result_data_table(self, slide, table_style: PPTXTableStyle = None):
-        table_data = get_measurements_result_data(self.measurements)
+        table_data = get_measurements_result_table_data(self.measurements_unloading_data.values())
         result = self.pptx_creator.add_table(slide, table_data)
         if table_style is None:
             table_style = table_style_summary()
@@ -156,26 +164,3 @@ class PI88ToPPTX:
 
     def save(self, filename="delme.prs"):
         self.prs.save(filename)
-
-
-
-def create_demo_figure():
-    figure = plt.figure(figsize=(6.4, 6.8), dpi=100, facecolor='w', edgecolor='w', frameon=True)
-    # figure.patch  # The Rectangle instance representing the figure background patch.
-    # figure.patch.set_visible(False)
-    figure.patch.set_alpha(0.5)
-    supertitle = figure.suptitle('suptitle', fontsize=14, fontweight='bold', color='red')
-    supertitle.set_color('green')
-    supertitle.set_rotation(5)
-    supertitle.set_size(18)
-
-    textstr = '\n'.join((
-        fr'$\mu={5}^{5}$',
-        r'$\mathrm{median}=3_3$',
-        r'$median=3_3$',
-        fr'$\sigma=$'))
-    return figure
-
-
-if __name__ == "__main__":
-    main()

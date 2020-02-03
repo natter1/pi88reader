@@ -20,6 +20,41 @@ Features
 * customizeable plots using matplotlib
 * creating automated powerpoint reports (including use of template \*.pptx)
 
+class PI88Measurement
+---------------------
+
+.. code:: python
+
+    from pi88reader.pi88_importer import PI88Measurement
+
+    filename = '..\\resources\\quasi_static_12000uN.tdm'
+    measurement = PI88Measurement(filename)
+
+The class PI88Measurment is used to import TriboScan \*.tdm files created with a PI88 nanoindenter.
+After loading a file it has quasi static time/load/depth data, area function, segment data and in case of a dynamic
+measurement the average dynamic data (complex modulus, phase shift ...).
+
+class PI88Plotter
+-----------------
+
+.. code:: python
+
+    from pi88reader.pi88_importer import load_tdm_files
+    from pi88reader.pi88_plotter import PI88Plotter
+    from pi88reader.plotter_styles import get_plotter_style_bernhard_4
+
+    measurements = load_tdm_files('../resources/creep_example/')
+    plotter = PI88Plotter(measurements)
+    plotter.get_displacement_time_plot().savefig("plotter01_default_style.png")
+    plotter.read_plotter_style(get_plotter_style_bernhard_4())
+    plotter.get_displacement_time_plot().savefig("plotter01_bernhard_4_style.png")
+
+
+.. image:: https://github.com/natter1/pi88reader/raw/master/docs/images/plotter01_default_style.png
+    :scale: 48 %
+.. image:: https://github.com/natter1/pi88reader/raw/master/docs/images/plotter01_bernhard_4_style.png
+    :scale: 48 %
+
 
 License and Acknowledgments
 ---------------------------

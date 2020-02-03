@@ -2,15 +2,7 @@
 Functions to handle a collection of measurements.
 @author: Nathanael Jöhrmmann
 """
-from typing import Iterable, Sized, Collection
-
-
-# Quasi_Analysis_Unload_Segment
-
-# 'Acquisition_Transducer_Serial'
-# 'Acquisition_TriboScan_Version'
-from pi88reader.ni_analyser import calc_unloading_data
-from pi88reader.utils_pi88measurement import get_measurement_result_data
+from typing import Iterable, Collection, Union, ValuesView
 
 
 def get_set_by_setting_name(name: str, measurements: Iterable) -> set:
@@ -28,21 +20,15 @@ def get_summary_by_set(my_set: set) -> str:
         result += text
     return result
 
-# ----------------------------------------------------------------------------------------------------------------------
-
 
 def get_transducer_serials_string(measurements: Iterable) -> str:
     serials = get_set_by_setting_name("Acquisition_Transducer_Serial", measurements)
     return get_summary_by_set(serials)
 
-# ----------------------------------------------------------------------------------------------------------------------
-
 
 def get_triboscan_versions_string(measurements: Iterable) -> str:
     versions = get_set_by_setting_name("Acquisition_TriboScan_Version", measurements)
     return get_summary_by_set(versions)
-
-# ----------------------------------------------------------------------------------------------------------------------
 
 
 def get_feedback_modes(measurements: Iterable) -> set:
@@ -64,9 +50,6 @@ def get_feedback_modes_string(measurements: Iterable) -> str:
             result += ", "
         result += "load controlled"
     return result
-
-
-# ----------------------------------------------------------------------------------------------------------------------
 
 
 def get_measurement_dates(measurements: Iterable) -> set:
@@ -94,7 +77,7 @@ def get_aborted_measurements(measurements: Iterable) -> list:
     return result
 
 
-def get_measurements_meta_data(measurements: Collection) -> list:
+def get_measurements_meta_table_data(measurements: Collection) -> list:
     """Get table like meta data for a collection of measurements."""
     return [["Number of measurements:", len(measurements)],
             ["Feedback modes: ", get_feedback_modes_string(measurements)],
@@ -104,12 +87,11 @@ def get_measurements_meta_data(measurements: Collection) -> list:
             ["Triboscan versions: ", get_triboscan_versions_string(measurements)]]
 
 
-def get_measurements_result_data(measurements: Collection) -> list:
+def get_measurements_result_table_data(data_list: Union[ValuesView, Iterable[dict]]) -> list:
     result = [["Name", "Er [GPa]", "E [GPa]", "H [GPa"]]
 
-    for measurement in measurements:
-        data = calc_unloading_data(measurement)
-        result.append([measurement.base_name, f"{data['Er']:.2f}", f"{data['E']:.2f}", f"{data['hardness']:.2f}"])
+    for data in data_list:
+        result.append([data['base_name'], f"{data['Er']:.2f}", f"{data['E']:.2f}", f"{data['hardness']:.2f}"])
 
     return result
 

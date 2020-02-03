@@ -51,9 +51,9 @@ class PI88Plotter
 
 
 .. image:: https://github.com/natter1/pi88reader/raw/master/docs/images/plotter01_default_style.png
-    :scale: 48 %
+    :width: 240pt
 .. image:: https://github.com/natter1/pi88reader/raw/master/docs/images/plotter01_bernhard_4_style.png
-    :scale: 48 %
+    :width: 240pt
 
 
 License and Acknowledgments

@@ -58,6 +58,28 @@ class PI88Plotter
 +-----------+-----------+
 | |image01| | |image02| |
 +-----------+-----------+
+| default   | bernhard_4|
++-----------+-----------+
+
+The class PI88Plotter is based on matplotlib  and generates figures for typical nanoindentation plotting tasks.
+These include, load-displacement, load-time, displacement-time, hardness or  reduced modulus.
+The style of the plots can be customized with plotter styles (plotter_styles.py).
+This includes dpi, figure size, line and marker style.
+
+class PI88ToPPTX
+----------------
+
+...
+
+class PI88ToExcel
+-----------------
+
+...
+
+ni_analyser.py
+--------------
+
+...
 
 License and Acknowledgments
 ---------------------------

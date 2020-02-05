@@ -90,3 +90,12 @@ class GraphStyler:
         self.next_color()
         self.next_marker()
         self.next_linestyle()
+
+
+def get_power_law_fit_curve_style() -> GraphStyler:
+    result = GraphStyler()
+    result.linestyle_map = ["--"]
+    result.marker_map = [""]  # ["x", "+", "1"]
+    result.marker_size = 0
+    result.cmap = [[1, 0.5, 0]]
+    return result

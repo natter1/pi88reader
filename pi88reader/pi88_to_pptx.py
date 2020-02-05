@@ -6,15 +6,17 @@ from typing import Union, Iterable, Optional, List
 
 import matplotlib.pyplot as plt
 import pptx_tools.style_sheets as style_sheets
+from matplotlib.figure import Figure
 from pptx.shapes.autoshape import Shape
+from pptx.slide import Slide
 from pptx_tools.creator import PPTXCreator, PPTXPosition
 from pptx_tools.table_style import PPTXTableStyle
 from pptx_tools.templates import analyze_pptx
 
-from pi88reader.ni_analyser import calc_unloading_data
+from pi88reader.ni_analyser import calc_unloading_data, get_power_law_fit_curve
 from pi88reader.pi88_importer import PI88Measurement, load_tdm_files
 from pi88reader.pi88_plotter import PI88Plotter
-from pi88reader.plotter_styles import GraphStyler
+from pi88reader.plotter_styles import GraphStyler, get_power_law_fit_curve_style
 from pi88reader.pptx_styles import table_style_summary, table_style_measurements_meta
 from pi88reader.utils_pi88measurement import get_measurement_result_table_data, get_measurement_meta_table_data
 from pi88reader.utils_pi88measurements import get_measurements_meta_table_data, \
@@ -50,15 +52,15 @@ class PI88ToPPTX:
             except TypeError:
                 self.measurements.append(measurements)
 
-    def add_matplotlib_figure(self, fig, slide, pptx_position=None, **kwargs):
+    def add_matplotlib_figure(self, fig: Figure, slide: Slide, position: PPTXPosition = None, **kwargs):
         """
         :param fig:
         :param slide_index:
-        :param pptx_position:
+        :param position:
         :param kwargs: e.g. width and height
         :return: prs.shapes.picture.Picture
         """
-        return self.pptx_creator.add_matplotlib_figure(fig, slide, pptx_position, **kwargs)
+        return self.pptx_creator.add_matplotlib_figure(fig, slide, position, **kwargs)
 
     def create_summary_slide(self, layout=None):
         result = self.pptx_creator.add_slide(f"Summary - {self.path}", layout)
@@ -96,14 +98,20 @@ class PI88ToPPTX:
         title = measurement.base_name  # filename[:-4].split("/")[-1].split("\\")[-1]
         result = self.pptx_creator.add_slide(title, layout)
 
+        self.create_measurement_result_table(result, measurement)
+        self.create_measurement_meta_data_table(result, measurement)
+
         plotter = PI88Plotter(measurement)
         if graph_styler is not None:
             plotter.graph_styler = graph_styler
         fig = plotter.get_load_displacement_plot()
-        self.add_matplotlib_figure(fig, result, PPTXPosition(0.02, 0.15))
 
-        self.create_measurement_result_table(result, measurement)
-        self.create_measurement_meta_data_table(result, measurement)
+        if (measurement, self.poisson_ratio, self.beta) in self.measurements_unloading_data:
+            fit_data = self.measurements_unloading_data[(measurement, self.poisson_ratio, self.beta)]
+            fit_disp, fit_load = get_power_law_fit_curve(**fit_data)
+            fig.axes[0].plot(fit_disp, fit_load, **get_power_law_fit_curve_style().dict, label="power-law-fit")
+
+        self.add_matplotlib_figure(fig, result, PPTXPosition(0.02, 0.15))
         return result
 
     def create_measurement_slides(self, measurements: Optional[List[PI88Measurement]] = None, layout = None) -> list:

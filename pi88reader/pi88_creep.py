@@ -65,7 +65,7 @@ class PI88CreepReporterPPTX(PI88ToPPTX):  # todo: switch plotting to pi88_plotte
         load_disp_figure.tight_layout()
 
         result = self.pptx_creator.create_title_slide(title)
-        self.add_matplotlib_figure(load_disp_figure, slide=result, pptx_position=PPTXPosition(0.05, 0.25))
+        self.add_matplotlib_figure(load_disp_figure, slide=result, position=PPTXPosition(0.05, 0.25))
         return result
 
     def create_summary_slide(self, layout=None):

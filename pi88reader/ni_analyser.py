@@ -2,7 +2,7 @@
 @author: Nathanael Jöhrmann
 """
 import math
-from typing import Iterable
+from typing import Iterable, Tuple
 
 import numpy as np
 from scipy.optimize import curve_fit
@@ -31,10 +31,16 @@ def calc_Er(Ac_max: float, stiffness: float, beta: float, **_) -> float:
 def calc_E(Er: float, poisson_ratio: float, E_tip: float = 1140, poisson_ratio_tip: float = 0.07, **_):
     return (1 - poisson_ratio ** 2) / (1 / Er - (1 - poisson_ratio_tip ** 2) / (E_tip))  # * 1e9))
 
-def get_power_law_fit(x_data: Iterable, y_data: Iterable, start_values: list,) -> dict:
 
-    def fit_function(x, _A, _hf, _m):
-        return _A * (x - _hf) ** _m
+def power_law_fit_function(x, _A, _hf, _m):
+    return _A * (x - _hf) ** _m
+
+
+def get_power_law_fit(x_data: Iterable, y_data: Iterable, start_values: list,) -> dict:
+    """
+
+    :return: {"fit_failed": bool, "fit_A": float, "fit_hf": float, "fit_m": float}
+    """
 
     result = {}
 
@@ -43,7 +49,7 @@ def get_power_law_fit(x_data: Iterable, y_data: Iterable, start_values: list,) -
     start_values = np.array(start_values)
 
     try:
-        popt, pcov = curve_fit(fit_function, x_data, y_data, p0=start_values, maxfev=10000, method='lm')
+        popt, pcov = curve_fit(power_law_fit_function, x_data, y_data, p0=start_values, maxfev=10000, method='lm')
         result.update({"fit_failed": False, "fit_A": popt[0], "fit_hf": popt[1], "fit_m": popt[2]})
     except ValueError as e:
         result.update({"fit_failed": True, "fit_A": 0, "fit_hf": 0, "fit_m": 0})
@@ -51,6 +57,18 @@ def get_power_law_fit(x_data: Iterable, y_data: Iterable, start_values: list,) -
         result.update({"fit_failed": True, "fit_A": 0, "fit_hf": 0, "fit_m": 0})
     return result
 
+
+def get_power_law_fit_curve(fit_A: float, fit_hf: float, fit_m: float,
+                            h_max: float, n_steps: int = 100, **_) -> Tuple[list, list]:
+    load = []
+    disp = []
+
+
+    for h in np.linspace(fit_hf, h_max, n_steps):
+        load.append(power_law_fit_function(h, fit_A, fit_hf, fit_m))
+        disp.append(h)
+
+    return disp, load
 
 def get_subset_by_y(x_data: Iterable, y_data: Iterable, upper: float, lower: float) -> dict:
     """Get a subset of given data by using upper and lower limit on y_data."""

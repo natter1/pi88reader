@@ -69,7 +69,17 @@ This includes dpi, figure size, line and marker style.
 class PI88ToPPTX
 ----------------
 
-...
+The class PI88PToPPTX helps to create PowerPoint reports based on PI88Measurement data.
+It uses python-pptx--interface module and so doesn't need an installed version of PowerPoint to create a pptx-file.
+Its possible to use a template file as base to get e.g. coorperate design. There are methods to create slides add tables,
+(matplotlib-) figures and textboxes to the slides. Tables and text can be formated using style sheets. For some common
+tasks, there are convenient functions:
+
+    * create_title_slide() ... create a slide with load-displacement plot and table with meta data of measurements
+    * create_measurement_slides() ... create a slide for each measurement including plot and calculated results
+    * create_summary_slide() ... summary of all measurements (including calculated Er, H)
+    * add_content_slide() ... creates a content slide with hyperlinks to all other slides
+
 
 class PI88ToExcel
 -----------------

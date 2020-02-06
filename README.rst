@@ -84,10 +84,15 @@ tasks, there are convenient functions:
 class PI88ToExcel
 -----------------
 
-...
+Used to export PI88Measurement data to excel.
 
 ni_analyser.py
 --------------
+
+Collection of nanoindentation functions to analyse PI88Measurement data.
+
+Styles
+------
 
 ...
 

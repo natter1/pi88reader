@@ -2,6 +2,7 @@
 Functions to handle a collection of measurements.
 @author: Nathanael Jöhrmmann
 """
+import statistics
 from typing import Iterable, Collection, Union, ValuesView
 
 
@@ -88,10 +89,8 @@ def get_measurements_meta_table_data(measurements: Collection) -> list:
 
 
 def get_measurements_result_table_data(data_list: Union[ValuesView, Iterable[dict]]) -> list:
-    result = [["Name", "Er [GPa]", "E [GPa]", "H [GPa"]]
-
+    result = [["Name", "Er [GPa]", "E [GPa]", "H [GPa]"]]
     for data in data_list:
         result.append([data['base_name'], f"{data['Er']:.2f}", f"{data['E']:.2f}", f"{data['hardness']:.2f}"])
-
     return result
 

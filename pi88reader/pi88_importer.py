@@ -48,7 +48,7 @@ DATA_TYPE_DICT = {  # name, unit, PI88Measurement attribute name
 }
 
 
-def load_tdm_files(path: str, sort_key=os.path.getctime):  # sorted by creation time (using windows)
+def load_tdm_files(path: str, sort_key=os.path.getctime) -> list:  # sorted by creation time (using windows)
     result = []
     files = glob.glob(os.path.join(path, '*.tdm'))
     files.sort(key=sort_key)

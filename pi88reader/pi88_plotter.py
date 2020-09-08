@@ -53,11 +53,18 @@ class PI88Plotter:
     def get_load_displacement_plot(self) -> Figure:
         return self.get_plot(pi88_importer.Data.DISPLACEMENT, pi88_importer.Data.LOAD)
 
-    def get_load_time_plot(self) -> Figure:
-        return self.get_plot(pi88_importer.Data.TIME, pi88_importer.Data.LOAD)
+    def get_load_time_plot(self, label_suffix=None) -> Figure:
+        return self.get_plot(pi88_importer.Data.TIME, pi88_importer.Data.LOAD, label_suffix=label_suffix)
 
     def get_displacement_time_plot(self):
         return self.get_plot(pi88_importer.Data.TIME, pi88_importer.Data.DISPLACEMENT)
+
+    def get_load_displacement_versus_time_plot(self):
+        result = self.get_load_time_plot(label_suffix=" load")
+
+
+
+    # def get_reduced_modulus_versus_max_displacement_plot(self):
 
     def get_reduced_modulus_plot(self, data_list: Union[ValuesView, Iterable[dict]] = None,
                                  upper: float = 0.95, lower: float = 0.2, beta: float = 1.0):
@@ -99,7 +106,7 @@ class PI88Plotter:
         figure.tight_layout()
         return figure
 
-    def get_plot(self, data_x: pi88_importer.Data, data_y: pi88_importer.Data) -> Figure:
+    def get_plot(self, data_x: pi88_importer.Data, data_y: pi88_importer.Data, label_suffix=None) -> Figure:
         data_type = pi88_importer.DATA_TYPE_DICT
         x_name, x_unit , x_attr_name = data_type[data_x]
         y_name, y_unit , y_attr_name = data_type[data_y]
@@ -110,6 +117,8 @@ class PI88Plotter:
             x = getattr(measurement, x_attr_name)
             y = getattr(measurement, y_attr_name)
             graph_label = measurement.base_name
+            if label_suffix is not None:
+                graph_label += label_suffix
             self.add_curve_to_axes(x, y, axes, label=graph_label)
         figure.tight_layout()
         return figure

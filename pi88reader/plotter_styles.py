@@ -19,7 +19,7 @@ def get_plotter_style_default() -> PlotterStyle:
     return result
 
 
-def get_plotter_style_bernhard_4() -> PlotterStyle:
+def get_plotter_style_bernhard_4(marker_size=5) -> PlotterStyle:
     """
     Max. 4 different graphs (black, red, blue, green)
     """
@@ -27,7 +27,7 @@ def get_plotter_style_bernhard_4() -> PlotterStyle:
     graph_styler = GraphStyler()
     graph_styler.linestyle_map = [""]
     graph_styler.marker_map = ["o", "s", "<", ">"]  # ["x", "+", "1"]
-    graph_styler.marker_size = 3
+    graph_styler.marker_size = marker_size
     graph_styler.cmap = [[0, 0, 0], # black
                          [1, 0, 0],  # red
                          [0, 0, 1],  # blue
@@ -48,6 +48,7 @@ class GraphStyler:
         self.linestyle_map = [""]  #dict(linestyle='')
 
         self.marker_size = 4
+        self.linewidth = 0
         self.marker_edge_width = 0
         self.current_color_index = 0
         self.current_marker_index = 0
@@ -75,6 +76,7 @@ class GraphStyler:
         result = self.color
         result.update(self.marker)
         result.update(self.linestyle)
+        result.update(dict(linewidth=self.linewidth))
         return result
 
     def next_color(self):

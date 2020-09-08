@@ -63,6 +63,27 @@ class PI88Plotter:
         result = self.get_load_time_plot(label_suffix=" load")
 
 
+        data_type = pi88_importer.DATA_TYPE_DICT
+        x_name, x_unit, x_attr_name = data_type[pi88_importer.Data.TIME]
+        y2_name, y2_unit, y2_attr_name = data_type[pi88_importer.Data.DISPLACEMENT]
+        ax2 = result.axes[0].twinx()
+        ax2.set_ylabel(f"{y2_name} [{y2_unit}]")
+        for measurement in self.measurements:
+            x = getattr(measurement, x_attr_name)
+            y2 = getattr(measurement, y2_attr_name)
+            graph_label = "displacement"  # measurement.base_name + " displacement"
+            self.add_curve_to_axes(x, y2, ax2, label=graph_label)
+
+        lines, labels = result.axes[0].get_legend_handles_labels()
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        ax2.legend(lines + lines2, labels + labels2, loc='upper left')
+
+        #result.axes[0].legend(loc='upper left')
+        #result.axes[1].legend(loc='upper left')
+
+        result.tight_layout()
+        return result
+
 
     # def get_reduced_modulus_versus_max_displacement_plot(self):
 
@@ -116,7 +137,10 @@ class PI88Plotter:
         for measurement in self.measurements:
             x = getattr(measurement, x_attr_name)
             y = getattr(measurement, y_attr_name)
-            graph_label = measurement.base_name
+            if len(self.measurements) > 1:
+                graph_label = measurement.base_name
+            else:
+                graph_label = ''
             if label_suffix is not None:
                 graph_label += label_suffix
             self.add_curve_to_axes(x, y, axes, label=graph_label)

@@ -9,7 +9,7 @@ long_description = (root_path / "README.rst").read_text()
 
 setup(
     name='pi88reader',
-    version='0.0.1a04',
+    version='0.0.1a05',
     packages=['pi88reader'],
     url='https://github.com/natter1/pi88reader.git',
     license='MIT',

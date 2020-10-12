@@ -3,21 +3,22 @@
 """
 import os
 from typing import Union, List, Tuple, Iterable, Optional, ValuesView
+
+import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.pyplot import Axes
-import matplotlib.pyplot as plt
-import numpy as np
 
+import pi88reader.pi88_importer as pi88_importer
 from pi88reader.ni_analyser import calc_unloading_data
 from pi88reader.pi88_importer import PI88Measurement, load_tdm_files
-import pi88reader.pi88_importer as pi88_importer
 from pi88reader.plotter_styles import PlotterStyle, GraphStyler
 
 
 class PI88Plotter:
     """
-    Used to plot data from PI88 measuremnts with matplotlib
+    Used to plot data from PI88 measurements with matplotlib
     """
+
     def __init__(self, pi88_measurements: Union[PI88Measurement, List[PI88Measurement]]):
         self.measurements = []
         self.add_measurements(pi88_measurements)
@@ -60,8 +61,7 @@ class PI88Plotter:
         return self.get_plot(pi88_importer.Data.TIME, pi88_importer.Data.DISPLACEMENT)
 
     def get_load_displacement_versus_time_plot(self):
-        result = self.get_load_time_plot(label_suffix=" load")
-
+        result = self.get_load_time_plot(label_suffix="load")
 
         data_type = pi88_importer.DATA_TYPE_DICT
         x_name, x_unit, x_attr_name = data_type[pi88_importer.Data.TIME]
@@ -76,14 +76,13 @@ class PI88Plotter:
 
         lines, labels = result.axes[0].get_legend_handles_labels()
         lines2, labels2 = ax2.get_legend_handles_labels()
-        ax2.legend(lines + lines2, labels + labels2, loc='upper left')
+        ax2.legend(lines + lines2, labels + labels2, loc='best')
 
-        #result.axes[0].legend(loc='upper left')
-        #result.axes[1].legend(loc='upper left')
+        # result.axes[0].legend(loc='upper left')
+        # result.axes[1].legend(loc='upper left')
 
         result.tight_layout()
         return result
-
 
     # def get_reduced_modulus_versus_max_displacement_plot(self):
 
@@ -108,7 +107,7 @@ class PI88Plotter:
         return figure
 
     def get_hardness_plot(self, data_list: Union[ValuesView, Iterable[dict]] = None,
-                                 upper: float = 0.95, lower: float = 0.2, beta: float = 1.0):
+                          upper: float = 0.95, lower: float = 0.2, beta: float = 1.0):
         if data_list is None:
             data_list = []
         for measurement in self.measurements:
@@ -129,8 +128,8 @@ class PI88Plotter:
 
     def get_plot(self, data_x: pi88_importer.Data, data_y: pi88_importer.Data, label_suffix=None) -> Figure:
         data_type = pi88_importer.DATA_TYPE_DICT
-        x_name, x_unit , x_attr_name = data_type[data_x]
-        y_name, y_unit , y_attr_name = data_type[data_y]
+        x_name, x_unit, x_attr_name = data_type[data_x]
+        y_name, y_unit, y_attr_name = data_type[data_y]
 
         figure, axes = self.create_figure_with_axes(x_label=f"{x_name} [{x_unit}]", y_label=f"{y_name} [{y_unit}]")
         # axes.set_prop_cycle('color', self.colors)

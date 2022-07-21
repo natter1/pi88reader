@@ -109,7 +109,7 @@ class PI88ToPPTX:
         return result
 
     def create_measurement_slide(self, measurement: PI88Measurement, layout = None, graph_styler = None):
-        title = measurement.base_name  # filename[:-4].split("/")[-1].split("\\")[-1]
+        title = measurement._name  # filename[:-4].split("/")[-1].split("\\")[-1]
         result = self.pptx_creator.add_slide(title, layout)
 
         self.create_measurement_result_table(result, measurement)

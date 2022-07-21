@@ -137,7 +137,7 @@ class PI88Plotter:
             x = getattr(measurement, x_attr_name)
             y = getattr(measurement, y_attr_name)
             if len(self.measurements) > 1:
-                graph_label = measurement.base_name
+                graph_label = measurement._name
             else:
                 graph_label = ''
             if label_suffix is not None:

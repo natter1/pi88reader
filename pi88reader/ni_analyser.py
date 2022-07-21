@@ -105,7 +105,7 @@ def fit_unloading(displacement: Iterable, load: Iterable, upper, lower) -> dict:
 
 def calc_unloading_data(measurement, upper=0.95, lower=0.20, beta=1, poisson_ratio=0.3) -> dict:
     result = {
-        "base_name": measurement.base_name,
+        "name": measurement.name,
         "upper": upper,
         "lower": lower,
         "beta": beta,

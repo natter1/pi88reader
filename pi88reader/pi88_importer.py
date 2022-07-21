@@ -4,6 +4,7 @@
 import glob
 import os
 from enum import Enum, auto
+from pathlib import Path
 
 import numpy as np
 
@@ -50,8 +51,9 @@ DATA_TYPE_DICT = {  # name, unit, PI88Measurement attribute name
 
 def load_tdm_files(path: str, sort_key=os.path.getctime) -> list:  # sorted by creation time (using windows)
     result = []
-    files = glob.glob(os.path.join(path, '*.tdm'))
-    files.sort(key=sort_key)
+    files = sorted(Path(path).glob('*.tdm'), key=sort_key)
+    # files = glob.glob(os.path.join(path, '*.tdm'))
+    # files.sort(key=sort_key)
     for file in files:
         result.append(PI88Measurement(file))
     return result
@@ -263,7 +265,7 @@ class PI88Measurement:
     ]
 
     def __init__(self, filename):
-        self.filename =filename
+        self.filename = filename
         # only to make code completition in pycharm work:
         self.time = None
         self.depth = None
@@ -284,6 +286,8 @@ class PI88Measurement:
 
         for name_tuple in PI88Measurement.dynamic_name_tuples:
             self.remove_nans(name_tuple[0])
+
+        self.name = None  # is used as base_name if set
 
     def _read_quasi_static(self, data):
         group_name = "Indentation All Data Points"
@@ -339,6 +343,13 @@ class PI88Measurement:
                   f"depth[{self.depth_unit}]",
                   f"load[{self.load_unit}]"]
         return header, self.time[mask], self.depth[mask], self.load[mask]
+
+    @property
+    def _name(self) -> str:
+        """Returns given name (if not None) or base_name."""
+        if self.name is not None:
+            return self.name
+        return self.base_name
 
     @property
     def base_name(self) -> str:

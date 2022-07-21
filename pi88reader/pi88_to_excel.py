@@ -29,8 +29,7 @@ class PI88ToExcel:
 
     def add_sheet_quasi_static_data(self):
         wb = self.workbook
-        #mws_title = self.measurement.filename.split('.')[2].split('\\')[2]
-        ws_title = self.measurement.filename.split('\\')[-1].split('.')[0]
+        ws_title = self.measurement._name
         ws = wb.create_sheet(title=ws_title)
         data = self.measurement.get_quasi_static_curve()
         self.write_data(ws, data)

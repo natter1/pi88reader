@@ -41,7 +41,7 @@ def polynomial_fit(m: PI88Measurement,  segment_type: SegmentType, polynom_deg=5
 
 
 def powerlaw_fit_unloading_dict(m: PI88Measurement, upper=0.95, lower=0.20, beta=1, poisson_ratio=0.3):
-    result = calc_unloading_data(measurement, upper=upper, lower=lower, beta=beta, poisson_ratio=poisson_ratio)
+    result = calc_unloading_data(m, upper=upper, lower=lower, beta=beta, poisson_ratio=poisson_ratio)
     return result
 
 
@@ -84,19 +84,21 @@ def create_ni_sim_input_file(measurement: PI88Measurement, poisson_ratio=0.3):
     result += "poisson ratio sample (also used to calc E below) (row 29)\n"
     result += f"{unloading_dict['poisson_ratio']}\n"
 
-    result += "calculated E [GPa] (not Er!) (row 31)"
+    result += "calculated E [GPa] (not Er!) (row 31)\n"
     result += f"{unloading_dict['E']}\n"
 
+    result += "beta\n"
+    result += f"{unloading_dict['beta']}\n"
     # todo: change later after implementing creep during hold in FEM
     displacement_during_hold = hold_displacement(measurement)
     result += "delta displacement during hold (row 33)\n"
-    result += f"{displacement_during_hold}"
+    result += f"{displacement_during_hold}\n"
 
     result += "max. displacement [nm] (row 35)\n"
-    result += f"{max_displacement_during_load(measurement)}"
+    result += f"{max_displacement_during_load(measurement)}\n"
 
     result += "unload displacement end (~zero load) [nm] (row 37)\n"
-    result += f"{displacement_after_unload(measurement)}"
+    result += f"{displacement_after_unload(measurement)}\n"
 
     _, _, unloading_depth, unloading_load = measurement.get_segment_curve(SegmentType.UNLOAD)
     result += "exp. unloading curve (disp;load) row(39ff)\n"
@@ -104,9 +106,10 @@ def create_ni_sim_input_file(measurement: PI88Measurement, poisson_ratio=0.3):
         result += f"{depth};{unloading_load[i]}\n"
 
     result += "END"
-    
-    text_file = open("delme.txt", "w")
-    n = text_file.write(result)
+
+    save_path = Path(measurement.filename).parent/(measurement.base_name + "_DATA.txt")
+    text_file = open(save_path, "w")
+    text_file.write(result)
     text_file.close()
 
 

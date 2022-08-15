@@ -15,7 +15,7 @@ setup(
     license='MIT',
     author='Nathanael Jöhrmann',
     author_email='',
-    description='Tool to read/process PI88 measurement files',
+    description='Tool to read/process PI88 m files',
     long_description=long_description,
     long_description_content_type='text/x-rst',
     install_requires=['matplotlib', 'numpy', 'scipy'],

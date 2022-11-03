@@ -49,7 +49,8 @@ def get_power_law_fit(x_data: Iterable, y_data: Iterable, start_values: list,) -
     start_values = np.array(start_values)
 
     try:
-        popt, pcov = curve_fit(power_law_fit_function, x_data, y_data, p0=start_values, maxfev=10000, method='lm')
+        popt, pcov = curve_fit(power_law_fit_function, x_data, y_data, p0=start_values, maxfev=10000, method='trf', #method='lm',
+                               bounds=((0, 0, 0), (np.inf, min(x_data), np.inf)))
         result.update({"fit_failed": False, "fit_A": popt[0], "fit_hf": popt[1], "fit_m": popt[2]})
     except ValueError as e:
         result.update({"fit_failed": True, "fit_A": 0, "fit_hf": 0, "fit_m": 0})
